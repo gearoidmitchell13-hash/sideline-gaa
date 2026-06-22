@@ -1,6 +1,6 @@
 /* ============================================================
    SidelineGAA — stats, summary screen & CSV export
-   Shares the global scope with app.js / shotchart.js.
+   Shares the global scope with app.js / shotchart.js / history.js.
    ============================================================ */
 
 'use strict';
@@ -44,16 +44,34 @@ function topScorer(side) {
   return best;
 }
 
-/* ---------- summary screen ---------- */
-function showSummary() {
+/* ---------- summary screen ----------
+   backTo: 'history' when viewing a saved match (Back returns to history). */
+function showSummary(backTo) {
   const A = statsFor('A'), B = statsFor('B');
   const win = total(state.score.A) === total(state.score.B) ? 'Draw'
     : (total(state.score.A) > total(state.score.B) ? state.meta.aName + ' win' : state.meta.bName + ' win');
+
+  // print-only report header
+  document.getElementById('reportHead').innerHTML =
+    `<div class="rep-title">${escapeHtml(state.meta.aName)} vs ${escapeHtml(state.meta.bName)}</div>` +
+    `<div class="rep-meta">SidelineGAA match report · ${new Date(state.savedAt || Date.now()).toLocaleDateString()}</div>`;
+
   document.getElementById('sumScore').innerHTML =
     `<div class="team A"><div class="nm">${escapeHtml(state.meta.aName)}</div><div class="sc">${gp(state.score.A)}</div><div class="tot">${total(state.score.A)} pts</div></div>` +
     `<div class="team B"><div class="nm">${escapeHtml(state.meta.bName)}</div><div class="sc">${gp(state.score.B)}</div><div class="tot">${total(state.score.B)} pts</div></div>`;
   document.getElementById('sumResult').textContent = `${state.phase === 'ended' ? 'Full time' : 'Live snapshot'} · ${win}`;
-  document.getElementById('backLiveBtn').style.display = state.phase === 'ended' ? 'none' : 'block';
+
+  // back button: to history (archived view) or to live match
+  const back = document.getElementById('backLiveBtn');
+  if (backTo === 'history') {
+    back.style.display = 'block';
+    back.textContent = '← Back to history';
+    back.onclick = () => showHistory();
+  } else {
+    back.textContent = '← Back to match';
+    back.onclick = () => showScreen('live');
+    back.style.display = state.phase === 'ended' ? 'none' : 'block';
+  }
 
   // chart toggle wiring
   document.getElementById('chartA').textContent = state.meta.aName;

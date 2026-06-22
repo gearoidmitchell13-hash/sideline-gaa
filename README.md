@@ -50,12 +50,18 @@ https URL or localhost.)
 3. **Track** — the action bar shows only what can happen next: **Score / Wide / Free won /
    Turnover / Foul**. A score asks type (Point / **2-Point** / Goal) → scorer → source, then the
    **kickout sheet opens automatically**.
-4. **Undo** rolls back the last event. **⋯** has substitution, half-time, pause and new match.
+4. **Undo** rolls back the last event, or **tap any event in the feed** to fix its player or delete it (the score and possession re-derive automatically). **⋯** has substitution, half-time, pause and new match. The **screen stays awake** while a match is running, and discarding/ending a match asks for confirmation.
 5. **Shot location** — after a score or wide, tap roughly where on the pitch it was taken (or
    **Skip**). These build the shot map.
 6. **Live stats / full-time** — tap **Live stats** any time, or end the match for the full
-   summary with a **shot chart** (toggle between teams) and **Export CSV** of the raw events +
-   stats (including shot X/Y).
+   summary with a **shot chart** (toggle between teams), **Print / Save PDF** for a one-page
+   report, and **Export CSV** of the raw events + stats (including shot X/Y).
+   - **📈 Detailed stats** (button on the summary) breaks down scoring by source (play / frees /
+     dead balls) and type, kickouts won/lost, a per-player table (points, shots, conversion,
+     turnovers), and shot conversion by pitch zone (inside 20m / 20–40m / beyond the 40m arc).
+7. **History & season** — finished matches are saved automatically. Open **History & season**
+   from the start screen to see your record, points for/against, season top scorers, and to
+   reopen or delete any past match.
 
 ## Your data
 - Stored **only on your phone** (in the browser/app's local storage) — nothing is uploaded.
@@ -70,16 +76,19 @@ service worker picks up the new version on the next launch or two.
 ## Files
 ```
 SidelineGAA-PWA/
-├─ index.html          screens (setup / live / summary) + shell
-├─ styles.css          mobile-first styling, safe-area aware
-├─ app.js              the full app: state machine, flow, timer, persistence, CSV
+├─ index.html          screens (setup / live / summary / history) + shell
+├─ styles.css          mobile-first styling, print CSS, safe-area aware
+├─ app.js              core: state machine, live flow, timer, persistence
+├─ stats.js            summary screen, stats engine, CSV export
+├─ shotchart.js        shot-location capture + shot map
+├─ history.js          saved matches + season aggregation
+├─ detail.js           detailed stats (breakdowns, per-player, zones)
+├─ live.js             wake lock + edit/delete events (score/possession recompute)
 ├─ sw.js               service worker (offline cache)
 ├─ manifest.webmanifest  app name, colours, icons, standalone display
 └─ icons/             home-screen + maskable icons
 ```
 
-## Roadmap (nice-to-haves next)
-- Shot chart on the summary screen.
-- Pitch-location capture (Pro mode) and possession chains.
-- Multiple saved matches + season totals.
-- One-tap share of the CSV / a printable match report.
+## Roadmap (still on the list)
+- Possession chains and richer Pro-mode detail.
+- One-tap share of the CSV/report.

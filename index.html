@@ -46,6 +46,7 @@
     <div class="hint">Opposition is tracked lighter — just jersey numbers (1–15), no names needed.</div>
 
     <button class="primary" id="startBtn">Start match ▶</button>
+    <button class="ghost" id="historyBtn">📚 History &amp; season</button>
     <button class="ghost" id="resetTeamsBtn">Reset to sample squad</button>
   </section>
 
@@ -85,6 +86,7 @@
 
   <!-- ===================== SUMMARY ===================== -->
   <section class="screen summary" id="screen-summary">
+    <div class="print-only" id="reportHead"></div>
     <div class="scorebar" id="sumScore"></div>
     <h2 id="sumResult">Full time</h2>
 
@@ -101,9 +103,33 @@
     </div>
 
     <div class="stat-table" id="sumTable"></div>
+    <button class="ghost" id="detailBtn">📈 Detailed stats</button>
     <button class="ghost" id="backLiveBtn" style="display:none">← Back to match</button>
-    <button class="primary" id="exportBtn" style="background:var(--green);color:#fff">⤓ Export CSV</button>
+    <button class="primary" id="printBtn" style="background:var(--green);color:#fff">🖨 Print / Save PDF</button>
+    <button class="ghost" id="exportBtn">⤓ Export CSV</button>
     <button class="ghost" id="newMatchBtn">New match</button>
+  </section>
+
+  <!-- ===================== DETAIL ===================== -->
+  <section class="screen detail" id="screen-detail">
+    <div class="hist-head">
+      <button class="linkbtn" id="detailBackBtn">‹ Summary</button>
+      <b>Detailed stats</b>
+      <span style="width:64px"></span>
+    </div>
+    <div id="detailBody"></div>
+  </section>
+
+  <!-- ===================== HISTORY ===================== -->
+  <section class="screen history" id="screen-history">
+    <div class="hist-head">
+      <button class="linkbtn" id="histBackBtn">‹ Setup</button>
+      <b>History &amp; season</b>
+      <span style="width:54px"></span>
+    </div>
+    <div id="histSeason"></div>
+    <h2 class="hist-h">Saved matches</h2>
+    <div id="histList"></div>
   </section>
 
 </div>
@@ -121,6 +147,9 @@
 </script>
 <script src="shotchart.js" defer></script>
 <script src="stats.js" defer></script>
+<script src="history.js" defer></script>
+<script src="detail.js" defer></script>
+<script src="live.js" defer></script>
 <script src="app.js" defer></script>
 </body>
 </html>

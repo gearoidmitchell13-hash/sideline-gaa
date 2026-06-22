@@ -113,7 +113,7 @@ function undo() {
    SCREEN ROUTING
    ============================================================ */
 function showScreen(name) {
-  ['setup', 'live', 'summary'].forEach(s =>
+  ['setup', 'live', 'summary', 'history', 'detail'].forEach(s =>
     $('screen-' + s).classList.toggle('active', s === name));
   $('appTag').textContent = (name === 'live' && state)
     ? `${state.meta.aName} v ${state.meta.bName}`
@@ -375,9 +375,9 @@ function commitKO(kt, outcome, winner) {
 function moreMenu() {
   openSheet('Match controls', [
     { label: `Substitution (${state.meta.aName})`, onClick: () => pickPlayer('A', 'Player coming OFF', off => pickBench(off)) },
-    { label: state.period === 'H1' ? 'Go to half-time' : 'End match (full time)', onClick: endPeriod },
+    { label: state.period === 'H1' ? 'Go to half-time' : 'End match (full time)', onClick: () => { if (state.period !== 'H1' && typeof confirm === 'function' && !confirm('End the match? It will be saved to history.')) return; endPeriod(); } },
     { label: state.running ? 'Pause clock' : 'Resume clock', onClick: () => { state.running = !state.running; closeSheet(); render(); saveMatch(); } },
-    { label: 'New match (discard)', cls: 'b', onClick: () => { closeSheet(); clearMatch(); state = null; undoStack = []; renderSetup(); showScreen('setup'); } }
+    { label: 'New match (discard)', cls: 'b', onClick: () => { if (typeof confirm === 'function' && !confirm('Discard the current match? It is not saved to history.')) return; closeSheet(); clearMatch(); state = null; undoStack = []; renderSetup(); showScreen('setup'); } }
   ], 1);
 }
 function endPeriod() {
@@ -390,6 +390,7 @@ function endPeriod() {
   } else {
     state.running = false; state.phase = 'ended';
     addEvent({ kind: 'period', note: 'Full time' });
+    archiveCurrentMatch();
     closeSheet(); saveMatch(); showSummary();
   }
 }
@@ -485,11 +486,15 @@ function feedText(ev) {
 function renderFeed() {
   const f = $('feedList'); f.innerHTML = '';
   if (!state.events.length) { f.innerHTML = '<div class="pregame-note">No events yet.</div>'; return; }
-  state.events.slice().reverse().forEach(ev => {
+  const n = state.events.length;
+  state.events.slice().reverse().forEach((ev, ri) => {
+    const idx = n - 1 - ri;
     const row = document.createElement('div'); row.className = 'ev';
     row.innerHTML = `<span class="min">${ev.min}'</span>` +
       `<span class="tag ${tagClass(ev.side)}">${tagFor(ev)}</span>` +
-      `<span class="tx">${escapeHtml(feedText(ev))}</span>`;
+      `<span class="tx">${escapeHtml(feedText(ev))}</span>` +
+      (state.phase !== 'ended' ? `<span class="ev-edit">✎</span>` : '');
+    if (state.phase !== 'ended') row.onclick = () => editEvent(idx);
     f.appendChild(row);
   });
 }
@@ -497,6 +502,7 @@ function render() {
   if (!state) return;
   bindLive(); renderScore(); renderClock(); renderPoss(); renderContext(); renderFeed();
   $('undoBtn').disabled = undoStack.length === 0;
+  updateWakeLock();
 }
 
 /* STATS, SUMMARY & CSV moved to stats.js · SHOT CHART in shotchart.js */
@@ -529,7 +535,12 @@ function init() {
   // summary listeners
   $('exportBtn').onclick = exportCSV;
   $('backLiveBtn').onclick = () => showScreen('live');
-  $('newMatchBtn').onclick = () => { clearMatch(); state = null; undoStack = []; renderSetup(); showScreen('setup'); };
+  $('newMatchBtn').onclick = () => { if (state && state.phase !== 'ended' && typeof confirm === 'function' && !confirm('Discard this match? It is not saved to history.')) return; clearMatch(); state = null; undoStack = []; renderSetup(); showScreen('setup'); };
+  $('historyBtn').onclick = () => showHistory();
+  $('histBackBtn').onclick = () => { renderSetup(); showScreen('setup'); };
+  $('printBtn').onclick = () => window.print();
+  $('detailBtn').onclick = () => showDetail();
+  $('detailBackBtn').onclick = () => showScreen('summary');
 
   // route based on saved match
   const m = loadMatch();
