@@ -1,0 +1,16 @@
+{
+  "name": "SidelineGAA — GAA Stats Tracker",
+  "short_name": "SidelineGAA",
+  "description": "Track Gaelic football stats live from the sideline — guided flow, possession timer, 2026 ruleset.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0d130f",
+  "theme_color": "#1b7a3d",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

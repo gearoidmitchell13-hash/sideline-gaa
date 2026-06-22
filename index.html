@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>SidelineGAA</title>
+<meta name="theme-color" content="#1b7a3d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SidelineGAA">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+
+  <div class="appbar">
+    <div class="brand"><img src="icons/icon-192.png" alt=""> SidelineGAA</div>
+    <div class="tag" id="appTag">GAA stats · 2026 rules</div>
+  </div>
+
+  <!-- ===================== SETUP ===================== -->
+  <section class="screen setup" id="screen-setup">
+    <div id="resumeBox"></div>
+
+    <div class="two-col">
+      <div class="field"><label>Your team</label><input id="aName" maxlength="22" placeholder="Naomh Pádraig"></div>
+      <div class="field"><label>Opposition</label><input id="bName" maxlength="22" placeholder="Erins Own"></div>
+    </div>
+
+    <div class="two-col">
+      <div class="field"><label>Half length (min)</label><input id="halfLen" type="number" inputmode="numeric" min="1" max="45" value="30"></div>
+      <div class="field"><label>Tracking depth</label>
+        <div class="seg" id="depthSeg">
+          <button data-d="quick">Quick</button>
+          <button data-d="standard" class="on">Standard</button>
+          <button data-d="pro">Pro</button>
+        </div>
+      </div>
+    </div>
+
+    <h2>Your starting 15</h2>
+    <div class="roster" id="rosterA"></div>
+    <div class="hint">Opposition is tracked lighter — just jersey numbers (1–15), no names needed.</div>
+
+    <button class="primary" id="startBtn">Start match ▶</button>
+    <button class="ghost" id="resetTeamsBtn">Reset to sample squad</button>
+  </section>
+
+  <!-- ===================== LIVE ===================== -->
+  <section class="screen" id="screen-live">
+    <div class="scorebar">
+      <div class="team A live" id="boxA"><div class="nm" id="nmA">—</div><div class="sc" id="scoreA">0-00</div><div class="tot" id="totA">0 pts</div></div>
+      <div class="team B" id="boxB"><div class="nm" id="nmB">—</div><div class="sc" id="scoreB">0-00</div><div class="tot" id="totB">0 pts</div></div>
+    </div>
+
+    <div class="clockbar">
+      <span id="periodLbl">H1</span>
+      <span class="t" id="clock">00:00</span>
+      <span class="ctrl">
+        <button class="mbtn" id="pauseBtn">⏸</button>
+        <button class="mbtn" id="moreBtn">⋯</button>
+        <span class="rec" id="rec">●</span>
+      </span>
+    </div>
+
+    <div class="possbar"><div class="a" id="possA" style="width:50%"></div><div class="b" id="possB" style="width:50%"></div></div>
+    <div class="poss-lbl"><span id="possLblA">Poss 50%</span><span id="possLblB">50%</span></div>
+
+    <div class="ctx" id="ctx"></div>
+    <div id="actionArea"></div>
+
+    <div class="feed">
+      <div class="fh">Event feed</div>
+      <div id="feedList"></div>
+    </div>
+
+    <div class="footbar">
+      <button class="undo" id="undoBtn" disabled>↶ Undo last</button>
+      <button id="statsBtn">📊 Live stats</button>
+    </div>
+  </section>
+
+  <!-- ===================== SUMMARY ===================== -->
+  <section class="screen summary" id="screen-summary">
+    <div class="scorebar" id="sumScore"></div>
+    <h2 id="sumResult">Full time</h2>
+
+    <div class="chart-toggle">
+      <button id="chartA" class="on">Your team</button>
+      <button id="chartB">Opposition</button>
+    </div>
+    <div id="sumChart"></div>
+    <div class="chart-legend">
+      <span><i class="lg-dot" style="background:#1b7a3d"></i>Point</span>
+      <span><i class="lg-dot" style="background:#1b7a3d;box-shadow:0 0 0 2px #f2b705"></i>2-point</span>
+      <span><i class="lg-dot" style="background:#1b7a3d;box-shadow:0 0 0 2px #fff"></i>Goal</span>
+      <span><i class="lg-dot" style="border:2px solid #b23a2e;background:transparent"></i>Wide</span>
+    </div>
+
+    <div class="stat-table" id="sumTable"></div>
+    <button class="ghost" id="backLiveBtn" style="display:none">← Back to match</button>
+    <button class="primary" id="exportBtn" style="background:var(--green);color:#fff">⤓ Export CSV</button>
+    <button class="ghost" id="newMatchBtn">New match</button>
+  </section>
+
+</div>
+
+<!-- ===================== SHEET OVERLAY ===================== -->
+<div class="overlay" id="overlay">
+  <div class="scrim" id="scrim"></div>
+  <div class="sheet"><div class="grab"></div><div id="sheetBody"></div></div>
+</div>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+  }
+</script>
+<script src="shotchart.js" defer></script>
+<script src="stats.js" defer></script>
+<script src="app.js" defer></script>
+</body>
+</html>
