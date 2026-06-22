@@ -55,9 +55,9 @@ During a match the **clock at the top keeps running** (it's the match clock); th
    **kickout sheet opens automatically**. **Goal / Point / 2-Point** have distinct colours (blue / green / gold) matching the shot map, and the score-source step defaults to a big **From play** with smaller placed-ball options.
    **Free won** records the **foul against the conceding
    team** (type + opposition jersey, skippable) before you take or tap-and-go the free — so frees
-   won/conceded, fouls and cards are all attributed. The summary's Detailed stats has a Discipline card.
+   won/conceded, fouls and cards are all attributed. The summary's Detailed stats has a Discipline card. **Turnovers** ask where on the pitch they happened (tap the full pitch, or skip).
 5. **Misses are realistic** — choosing Wide/Miss asks the type: **Wide** (over the line → kickout), or **Dropped short / Saved / Blocked**, which stay in play so you pick who won the loose ball; a blocked shot can also go **out for a 45**. A kickout that goes out is recorded as a **sideline ball**, not a free. A missed **free** captures the taker and location too.
-6. **Undo** rolls back the last event, or **tap any event in the feed** to fix its player or delete it (score and possession re-derive automatically). Logging a **Foul committed** asks the **player** then a card (default **No card**, with Yellow / Black / Red as quick secondary options); a **Black card** starts a **10-minute sin-bin timer** shown live. **⋯** has substitution, half-time, pause, **🏠 Home (keeps the match saved)**, and new match. The **screen stays awake** during a match; discarding/ending asks for confirmation.
+6. **Undo** rolls back the last event, or **tap any event in the feed** to fix its player or delete it (score and possession re-derive automatically). Logging a **Foul committed** asks the **player** then a card (default **No card**, with Yellow / Black / Red as quick secondary options); a **Black card** starts a **10-minute sin-bin timer** shown live. **⋯** has substitution, half-time, pause, **🏠 Home (keeps the match saved)**, and new match. At the end of normal time you choose **Full time** or **Extra time** (ET1/ET2, each with a throw-in restart). The **screen stays awake** during a match; discarding/ending asks for confirmation.
 7. **Shot location** — after a score or wide, tap roughly where on the pitch it was taken (or
    **Skip**). These build the shot map.
 8. **Live stats / full-time** — tap **Live stats** any time, or end the match for the full
@@ -65,7 +65,7 @@ During a match the **clock at the top keeps running** (it's the match clock); th
    report, and **Export CSV** of the raw events + stats (including shot X/Y).
    - **📈 Detailed stats** (button on the summary) breaks down scoring by source (play / frees /
      dead balls) and type, kickouts won/lost, a per-player table (points, shots, conversion,
-     turnovers), and shot conversion by pitch zone (inside 20m / 20–40m / beyond the 40m arc).
+     turnovers), shot conversion by pitch zone, a **Turnovers** card (won/conceded, **scores & points from turnovers** — derived from timing), and a **turnover map**.
 9. **History & season** — finished matches are saved automatically. Open **History & season**
    from the start screen to see your record, points for/against, season top scorers, and to
    reopen or delete any past match.
@@ -99,5 +99,5 @@ SidelineGAA-PWA/
 
 ## Roadmap (next up)
 - Re-introduce a meaningful **tracking-depth** control (gates how much player-level detail is asked).
-- Sin-bin player availability shown in the sub picker; possession chains; one-tap share of CSV/report.
-- Optionally track the opposition from a saved squad too (currently jersey-only).
+- Player minutes (from on-field tracking); half-time score in history; possession chains.
+- Sin-bin player availability in the sub picker; one-tap share of CSV/report; opposition from a saved squad.

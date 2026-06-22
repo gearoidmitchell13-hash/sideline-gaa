@@ -1,5 +1,5 @@
 // SidelineGAA service worker — offline app shell (cache-first).
-const CACHE = 'sidelinegaa-v10';
+const CACHE = 'sidelinegaa-v13';
 const ASSETS = [
   './',
   './index.html',
@@ -11,6 +11,8 @@ const ASSETS = [
   './detail.js',
   './live.js',
   './squads.js',
+  './analytics.js',
+  './analysis.js',
   './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png',

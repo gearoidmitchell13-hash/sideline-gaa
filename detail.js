@@ -61,6 +61,28 @@ function _zones(side) {
   return z;
 }
 
+function _possGain(e) {
+  if (e.kind === 'throwin' || e.kind === 'kickout' || e.kind === 'freeWon') return e.side;
+  if (e.kind === 'turnover' || e.kind === 'foul') return other(e.side);
+  return null;
+}
+function _turnoverScores(side) {
+  const evs = state.events; let n = 0, pts = 0;
+  for (let i = 0; i < evs.length; i++) {
+    const e = evs[i];
+    if (e.kind !== 'score' || e.side !== side) continue;
+    for (let j = i - 1; j >= 0; j--) {
+      const g = _possGain(evs[j]);
+      if (g == null) continue;
+      if (g === side && evs[j].kind === 'turnover' && (e.clock - evs[j].clock) <= 60) {
+        n++; pts += e.scoreType === 'g' ? 3 : e.scoreType === 'two' ? 2 : 1;
+      }
+      break;
+    }
+  }
+  return { n, pts };
+}
+
 function _drow(label, a, b) {
   return `<div class="stat-row"><span class="va">${a}</span><span class="lbl">${label}</span><span class="vb">${b}</span></div>`;
 }
@@ -119,6 +141,16 @@ function showDetail() {
     _drow('Frees conceded', stA.fc, stB.fc) +
     _drow('Yellow / Black / Red', `${stA.y}/${stA.bl}/${stA.rd}`, `${stB.y}/${stB.bl}/${stB.rd}`));
 
-  document.getElementById('detailBody').innerHTML = scoring + ownKO + oppKO + disc + players + zones;
+  const tvA = _turnoverScores('A'), tvB = _turnoverScores('B');
+  const turnovers = _dcard('Turnovers', header +
+    _drow('Won', stA.toWon, stB.toWon) +
+    _drow('Conceded', stA.toLost, stB.toLost) +
+    _drow('Scores from turnover', tvA.n, tvB.n) +
+    _drow('Points from turnover', tvA.pts, tvB.pts));
+  const tmap = _dcard(`Turnover map — ${nameA}`,
+    `<div class="chart-legend" style="margin-top:0"><span><i class="lg-dot" style="background:#1b7a3d"></i>Won</span><span><i class="lg-dot" style="background:#b23a2e"></i>Conceded</span></div>` +
+    `<div style="max-width:230px;margin:0 auto">${renderTurnoverMap('A')}</div>`);
+
+  document.getElementById('detailBody').innerHTML = scoring + ownKO + oppKO + disc + turnovers + players + zones + tmap;
   showScreen('detail');
 }

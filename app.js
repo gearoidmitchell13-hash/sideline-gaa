@@ -113,7 +113,7 @@ function undo() {
    SCREEN ROUTING
    ============================================================ */
 function showScreen(name) {
-  ['home', 'setup', 'live', 'summary', 'history', 'detail', 'squads'].forEach(s =>
+  ['home', 'setup', 'live', 'summary', 'history', 'detail', 'squads', 'analysis'].forEach(s =>
     $('screen-' + s).classList.toggle('active', s === name));
   $('appTag').textContent = (name === 'live' && state)
     ? `${state.meta.aName} v ${state.meta.bName}`
@@ -358,12 +358,12 @@ function onFreeWon() {
 function freeFoulPlayer(t, foulType) {
   const ot = other(t);
   pickPlayer(ot, `Foul by — ${teamName(ot)} jersey?`,
-    n => askCard(card => freeFoulCommit(t, foulType, n, card)),
-    () => askCard(card => freeFoulCommit(t, foulType, null, card)));
+    n => askCard(card => pickLocationFull(ot, loc => freeFoulCommit(t, foulType, n, card, loc))),
+    () => askCard(card => pickLocationFull(ot, loc => freeFoulCommit(t, foulType, null, card, loc))));
 }
-function freeFoulCommit(t, foulType, foulerN, card) {
+function freeFoulCommit(t, foulType, foulerN, card, loc) {
   pushHistory();
-  addEvent({ kind: 'foul', side: other(t), foulType, card, player: foulerN, free: true });
+  addEvent({ kind: 'foul', side: other(t), foulType, card, player: foulerN, free: true, loc });
   state.possession = t;
   if (card === 'black') startSinBin(other(t), foulerN);
   saveMatch();
@@ -388,8 +388,8 @@ function onFoul() {
 }
 function foulPlayer(t, f) {
   pickPlayer(t, t === 'A' ? 'Foul by — which player?' : 'Foul by — jersey?',
-    n => askCard(card => commitFoulFull(t, f, n, card)),
-    () => askCard(card => commitFoulFull(t, f, null, card)));
+    n => askCard(card => pickLocationFull(t, loc => commitFoulFull(t, f, n, card, loc))),
+    () => askCard(card => pickLocationFull(t, loc => commitFoulFull(t, f, null, card, loc))));
 }
 function askCard(cb) {
   openSheet('Card?', [
@@ -399,9 +399,9 @@ function askCard(cb) {
     { label: 'Red', cls: 'b', onClick: () => cb('red') }
   ], 3, 'Most fouls have no card. Black = 10-minute sin bin.');
 }
-function commitFoulFull(t, f, player, card) {
+function commitFoulFull(t, f, player, card, loc) {
   pushHistory();
-  addEvent({ kind: 'foul', side: t, foulType: f, card, player });
+  addEvent({ kind: 'foul', side: t, foulType: f, card, player, loc });
   state.possession = other(t);
   if (card === 'black') startSinBin(t, player);
   closeSheet(); render(); saveMatch();
@@ -432,12 +432,12 @@ function onTurnover() {
     ['tackle', 'kick', 'hand', 'carry', 'intercept', 'fumble'].map(mk), 2);
 }
 function turnWho(t, to) {
-  if (fullDepth(t)) pickPlayer('A', 'Who lost it?', n => commitTurn(t, to, n));
-  else commitTurn(t, to, null);
+  if (fullDepth(t)) pickPlayer('A', 'Who lost it?', n => pickLocationFull(t, loc => commitTurn(t, to, n, loc)));
+  else pickLocationFull(t, loc => commitTurn(t, to, null, loc));
 }
-function commitTurn(t, to, n) {
+function commitTurn(t, to, n, loc) {
   pushHistory();
-  addEvent({ kind: 'turnover', side: t, toType: to, player: n });
+  addEvent({ kind: 'turnover', side: t, toType: to, player: n, loc: loc || null });
   state.possession = other(t);
   closeSheet(); render(); saveMatch();
 }
@@ -464,25 +464,36 @@ function commitKO(kt, outcome, winner) {
 function moreMenu() {
   openSheet('Match controls', [
     { label: `Substitution (${state.meta.aName})`, onClick: () => pickPlayer('A', 'Player coming OFF', off => pickBench(off)) },
-    { label: state.period === 'H1' ? 'Go to half-time' : 'End match (full time)', onClick: () => { if (state.period !== 'H1' && typeof confirm === 'function' && !confirm('End the match? It will be saved to history.')) return; endPeriod(); } },
+    { label: ({ H1: 'Go to half-time', H2: 'End of normal time…', ET1: 'Go to ET half-time', ET2: 'End match (full time)' }[state.period] || 'End period'), onClick: () => { if (state.period === 'ET2' && typeof confirm === 'function' && !confirm('End the match? It will be saved to history.')) return; endPeriod(); } },
     { label: state.running ? 'Pause clock' : 'Resume clock', onClick: () => { state.running = !state.running; closeSheet(); render(); saveMatch(); } },
     { label: '🏠 Home (match stays saved)', onClick: () => { closeSheet(); goHome(); } },
     { label: 'New match (discard)', cls: 'b', onClick: () => { if (typeof confirm === 'function' && !confirm('Discard the current match? It is not saved to history.')) return; closeSheet(); clearMatch(); state = null; undoStack = []; renderSetup(); showScreen('setup'); } }
   ], 1);
 }
-function endPeriod() {
+function startNextPeriod(toPeriod, note) {
   pushHistory();
-  if (state.period === 'H1') {
-    addEvent({ kind: 'period', note: 'Half-time' });
-    state.period = 'H2'; state.running = false;
-    state.phase = 'pregame'; state.possession = null;   // H2 restarts with a throw-in
-    closeSheet(); render(); saveMatch();
-  } else {
-    state.running = false; state.phase = 'ended';
-    addEvent({ kind: 'period', note: 'Full time' });
-    archiveCurrentMatch();
-    closeSheet(); saveMatch(); showSummary();
+  addEvent({ kind: 'period', note });
+  state.period = toPeriod; state.running = false; state.phase = 'pregame'; state.possession = null;
+  closeSheet(); render(); saveMatch();
+}
+function endMatch() {
+  pushHistory();
+  state.running = false; state.phase = 'ended';
+  addEvent({ kind: 'period', note: 'Full time' });
+  archiveCurrentMatch();
+  closeSheet(); saveMatch(); showSummary();
+}
+function endPeriod() {
+  if (state.period === 'H1') { startNextPeriod('H2', 'Half-time'); }
+  else if (state.period === 'H2') {
+    closeSheet();
+    openSheet('End of normal time', [
+      { label: 'Full time — end match', cls: 'g span', onClick: endMatch },
+      { label: 'Go to extra time', cls: 'go span', onClick: () => startNextPeriod('ET1', 'Full time (normal)') }
+    ], 1, 'Extra time is two periods — tap throw-in to restart each.');
   }
+  else if (state.period === 'ET1') { startNextPeriod('ET2', 'Extra-time half-time'); }
+  else { endMatch(); }
 }
 
 /* ============================================================
@@ -525,7 +536,9 @@ function renderContext() {
     ctx.innerHTML = '';
     const note = state.period === 'H2'
       ? 'Second half — tap throw-in to restart.'
-      : 'Squads loaded. Tap throw-in to begin tracking.';
+      : (state.period === 'ET1' || state.period === 'ET2')
+        ? `Extra time (${state.period}) — tap throw-in to restart.`
+        : 'Squads loaded. Tap throw-in to begin tracking.';
     area.innerHTML = `<button class="throwin" id="tiBtn">▶  THROW-IN</button>
       <div class="pregame-note">${note}</div>`;
     $('tiBtn').onclick = throwIn;
@@ -634,6 +647,8 @@ function init() {
   $('printBtn').onclick = () => window.print();
   $('detailBtn').onclick = () => showDetail();
   $('detailBackBtn').onclick = () => showScreen('summary');
+  $('analysisBtn').onclick = () => showAnalysis();
+  $('analysisBackBtn').onclick = () => showScreen('summary');
 
   // home screen buttons
   $('homeNew').onclick = () => { renderSetup(); showScreen('setup'); };

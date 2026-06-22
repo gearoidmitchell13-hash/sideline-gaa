@@ -127,6 +127,7 @@
 
     <div class="stat-table" id="sumTable"></div>
     <button class="ghost" id="detailBtn">📈 Detailed stats</button>
+    <button class="ghost" id="analysisBtn">📊 Analysis</button>
     <button class="ghost" id="backLiveBtn" style="display:none">← Back to match</button>
     <button class="primary" id="printBtn" style="background:var(--green);color:#fff">🖨 Print / Save PDF</button>
     <button class="ghost" id="exportBtn">⤓ Export CSV</button>
@@ -141,6 +142,16 @@
       <span style="width:64px"></span>
     </div>
     <div id="detailBody"></div>
+  </section>
+
+  <!-- ===================== ANALYSIS ===================== -->
+  <section class="screen detail" id="screen-analysis">
+    <div class="hist-head">
+      <button class="linkbtn" id="analysisBackBtn">‹ Summary</button>
+      <b>Match analysis</b>
+      <span style="width:64px"></span>
+    </div>
+    <div id="analysisBody"></div>
   </section>
 
   <!-- ===================== SQUADS ===================== -->
@@ -184,6 +195,8 @@
 <script src="detail.js" defer></script>
 <script src="live.js" defer></script>
 <script src="squads.js" defer></script>
+<script src="analytics.js" defer></script>
+<script src="analysis.js" defer></script>
 <script src="app.js" defer></script>
 </body>
 </html>
