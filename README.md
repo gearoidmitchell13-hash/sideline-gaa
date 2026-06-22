@@ -54,16 +54,17 @@ During a match the **clock at the top keeps running** (it's the match clock); th
 3. **Track** — the action bar shows only what can happen next: **Score / Wide / Free won /
    Turnover / Foul**. A score asks type (Point / **2-Point** / Goal) → scorer → source, then the
    **kickout sheet opens automatically**.
-4. **Undo** rolls back the last event, or **tap any event in the feed** to fix its player or delete it (the score and possession re-derive automatically). **⋯** has substitution, half-time, pause and new match. The **screen stays awake** while a match is running, and discarding/ending a match asks for confirmation.
-5. **Shot location** — after a score or wide, tap roughly where on the pitch it was taken (or
+4. **Misses are realistic** — choosing Wide/Miss asks the type: **Wide** (over the line → kickout), or **Dropped short / Saved / Blocked**, which stay in play so you pick who won the loose ball; a blocked shot can also go **out for a 45**. A missed **free** now captures the taker and location too.
+5. **Undo** rolls back the last event, or **tap any event in the feed** to fix its player or delete it (score and possession re-derive automatically). **⋯** has substitution, half-time, pause, **🏠 Home (keeps the match saved)**, and new match. The **screen stays awake** during a match; discarding/ending asks for confirmation.
+6. **Shot location** — after a score or wide, tap roughly where on the pitch it was taken (or
    **Skip**). These build the shot map.
-6. **Live stats / full-time** — tap **Live stats** any time, or end the match for the full
+7. **Live stats / full-time** — tap **Live stats** any time, or end the match for the full
    summary with a **shot chart** (toggle between teams), **Print / Save PDF** for a one-page
    report, and **Export CSV** of the raw events + stats (including shot X/Y).
    - **📈 Detailed stats** (button on the summary) breaks down scoring by source (play / frees /
      dead balls) and type, kickouts won/lost, a per-player table (points, shots, conversion,
      turnovers), and shot conversion by pitch zone (inside 20m / 20–40m / beyond the 40m arc).
-7. **History & season** — finished matches are saved automatically. Open **History & season**
+8. **History & season** — finished matches are saved automatically. Open **History & season**
    from the start screen to see your record, points for/against, season top scorers, and to
    reopen or delete any past match.
 

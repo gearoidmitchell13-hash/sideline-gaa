@@ -41,6 +41,7 @@ function recompute() {
     switch (ev.kind) {
       case 'throwin':  possession = ev.side; break;
       case 'score':    score[ev.side][ev.scoreType]++; break;   // kickout that follows sets possession
+      case 'wide':     if (ev.wonBy) possession = ev.wonBy; break; // short/saved/blocked stayed in play
       case 'freeWon':  possession = ev.side; break;
       case 'foul':     possession = other(ev.side); break;
       case 'turnover': possession = other(ev.side); break;

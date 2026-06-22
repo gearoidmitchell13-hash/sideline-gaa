@@ -26,7 +26,7 @@ function defaultTeams() {
 /* ---------- labels ---------- */
 const SCORE_LABEL = { one: 'Point', two: '2-Point', g: 'Goal' };
 const SCORE_TAG   = { one: 'PT', two: '2PT', g: 'GL' };
-const MISS_LABEL  = { wide: 'Wide', short: 'Short', post: 'Off post', saved: 'Saved', blocked: 'Blocked' };
+const MISS_LABEL  = { wide: 'Wide', short: 'Dropped short', saved: 'Saved', blocked: 'Blocked' };
 const SOURCE_LABEL = { play: 'Play', free: 'Free', '45': '45', mark: 'Mark', sideline: 'Sideline', pen: 'Penalty' };
 const FOUL_LABEL  = { overcarry: 'Overcarry', charge: 'Charge', throwball: 'Throw ball',
   dissent: 'Dissent', square: 'Square ball', hold: 'Hold', tackle: 'Tackle', other: 'Other' };
@@ -296,21 +296,50 @@ function commitScore(t, kind, n, source, loc) {
 }
 
 /* WIDE / MISS */
-function onWide() {
-  const t = state.possession;
-  const mk = m => ({ label: MISS_LABEL[m], onClick: () => wideWho(t, m) });
-  openSheet('Shot missed — type?',
-    ['wide', 'short', 'post', 'saved', 'blocked'].map(mk), 2);
+function onWide() { startMiss(state.possession, null); }
+
+function startMiss(t, source) {
+  openSheet('Shot missed — type?', [
+    { label: 'Wide', onClick: () => missPlayer(t, 'wide', source) },
+    { label: 'Dropped short', onClick: () => missPlayer(t, 'short', source) },
+    { label: 'Saved', onClick: () => missPlayer(t, 'saved', source) },
+    { label: 'Blocked', onClick: () => missPlayer(t, 'blocked', source) }
+  ], 2, 'Wide / over the end line = kickout. Short, saved or blocked stay in play.');
 }
-function wideWho(t, m) {
-  if (fullDepth(t)) pickPlayer('A', 'Who shot?', n => pickLocation(t, loc => commitWide(t, m, n, loc)));
-  else pickLocation(t, loc => commitWide(t, m, null, loc));
+function missPlayer(t, m, source) {
+  if (fullDepth(t)) pickPlayer(t, 'Who shot?', n => pickLocation(t, loc => missResolve(t, m, source, n, loc)));
+  else pickLocation(t, loc => missResolve(t, m, source, null, loc));
 }
-function commitWide(t, m, n, loc) {
+function missResolve(t, m, source, n, loc) {
   pushHistory();
-  addEvent({ kind: 'wide', side: t, missType: m, player: n, loc: loc || null });
+  const ev = { kind: 'wide', side: t, missType: m, player: n, loc: loc || null };
+  if (source) ev.source = source;
+  addEvent(ev);
+  saveMatch();
+  if (m === 'wide') { closeSheet(); render(); kickout(other(t)); }   // dead ball -> kickout
+  else if (m === 'blocked') { blockedOutcome(t); }
+  else { ballWon(t); }                                               // short / saved stay in play
+}
+function _setWonBy(team) {
+  const e = state.events[state.events.length - 1];
+  if (e && e.kind === 'wide') e.wonBy = team;
+  state.possession = team;
   closeSheet(); render(); saveMatch();
-  kickout(other(t));
+}
+function ballWon(t) {
+  const ot = other(t);
+  openSheet('Ball stayed in play — who won it?', [
+    { label: `${teamName(t)}<small>rebound</small>`, cls: t === 'A' ? 'a' : 'b', onClick: () => _setWonBy(t) },
+    { label: `${teamName(ot)}`, cls: ot === 'A' ? 'a' : 'b', onClick: () => _setWonBy(ot) }
+  ], 1);
+}
+function blockedOutcome(t) {
+  const ot = other(t);
+  openSheet('Blocked — what happened?', [
+    { label: `Out for a 45 → ${teamName(t)}`, cls: 'go', onClick: () => _setWonBy(t) },
+    { label: `${teamName(t)} won it`, cls: t === 'A' ? 'a' : 'b', onClick: () => _setWonBy(t) },
+    { label: `${teamName(ot)} won it`, cls: ot === 'A' ? 'a' : 'b', onClick: () => _setWonBy(ot) }
+  ], 1);
 }
 
 /* FREE WON */
@@ -320,7 +349,7 @@ function onFreeWon() {
     { label: 'Point · 1', cls: 'g', onClick: () => freeScore(t, 'one') },
     { label: '2-Point · 2', cls: 'g', onClick: () => freeScore(t, 'two') },
     { label: 'Goal · 3', cls: 'g', onClick: () => freeScore(t, 'g') },
-    { label: 'Wide / miss', onClick: () => { pushHistory(); addEvent({ kind: 'wide', side: t, missType: 'wide', player: null, source: 'free' }); closeSheet(); render(); saveMatch(); kickout(other(t)); } },
+    { label: 'Wide / miss', onClick: () => startMiss(t, 'free') },
     { label: 'Tap &amp; go — keep ball', cls: 'go', onClick: () => tapGo(t) }
   ], 2, 'Solo-and-go keeps possession without a stoppage.');
 }
@@ -396,6 +425,7 @@ function moreMenu() {
     { label: `Substitution (${state.meta.aName})`, onClick: () => pickPlayer('A', 'Player coming OFF', off => pickBench(off)) },
     { label: state.period === 'H1' ? 'Go to half-time' : 'End match (full time)', onClick: () => { if (state.period !== 'H1' && typeof confirm === 'function' && !confirm('End the match? It will be saved to history.')) return; endPeriod(); } },
     { label: state.running ? 'Pause clock' : 'Resume clock', onClick: () => { state.running = !state.running; closeSheet(); render(); saveMatch(); } },
+    { label: '🏠 Home (match stays saved)', onClick: () => { closeSheet(); goHome(); } },
     { label: 'New match (discard)', cls: 'b', onClick: () => { if (typeof confirm === 'function' && !confirm('Discard the current match? It is not saved to history.')) return; closeSheet(); clearMatch(); state = null; undoStack = []; renderSetup(); showScreen('setup'); } }
   ], 1);
 }
