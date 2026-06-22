@@ -1,7 +1,7 @@
 /* ============================================================
    SidelineGAA — detailed stats screen
-   Scoring breakdown, kickout breakdown, per-player table,
-   shot conversion by zone. Shares global scope with app.js etc.
+   Scoring breakdown, own & opposition kickout breakdowns,
+   per-player table, shot conversion by zone.
    ============================================================ */
 
 'use strict';
@@ -19,16 +19,24 @@ function _scoreBreakdown(side) {
   return b;
 }
 
+/* Own kickouts (this team kicked) + opposition kickouts (how we did on theirs). */
 function _koBreakdown(side) {
-  const o = { total: 0, wc: 0, wb: 0, lc: 0, lb: 0, oop: 0 };
-  const map = { wonClean: 'wc', wonBreak: 'wb', lostClean: 'lc', lostBreak: 'lb', outOfPlay: 'oop' };
+  const own = { total: 0, wc: 0, wb: 0, lost: 0, oop: 0, won: 0, pct: 0 };
+  const opp = { total: 0, won: 0, lost: 0, pct: 0 };
   state.events.forEach(ev => {
-    if (ev.kind !== 'kickout' || ev.by !== side) return;
-    o.total++; o[map[ev.outcome]]++;
+    if (ev.kind !== 'kickout') return;
+    if (ev.by === side) {
+      own.total++;
+      if (ev.side === side) { own.won++; if (ev.outcome === 'wonClean') own.wc++; else own.wb++; }
+      else { own.lost++; if (ev.outcome === 'outOfPlay') own.oop++; }
+    } else if (ev.by === other(side)) {
+      opp.total++;
+      if (ev.side === side) opp.won++; else opp.lost++;
+    }
   });
-  o.won = o.wc + o.wb;
-  o.pct = o.total ? Math.round(o.won / o.total * 100) : 0;
-  return o;
+  own.pct = own.total ? Math.round(own.won / own.total * 100) : 0;
+  opp.pct = opp.total ? Math.round(opp.won / opp.total * 100) : 0;
+  return { own, opp };
 }
 
 function _playerRows(side) {
@@ -62,7 +70,7 @@ function _dcard(title, inner) {
 
 function showDetail() {
   const A = _scoreBreakdown('A'), B = _scoreBreakdown('B');
-  const kA = _koBreakdown('A'), kB = _koBreakdown('B');
+  const koA = _koBreakdown('A'), koB = _koBreakdown('B');
   const nameA = escapeHtml(state.meta.aName), nameB = escapeHtml(state.meta.bName);
   const header = `<div class="d-cols"><span>${nameA}</span><span></span><span>${nameB}</span></div>`;
 
@@ -74,13 +82,18 @@ function showDetail() {
     _drow('2-pointers', A.two, B.two) +
     _drow('Goals', A.goal, B.goal));
 
-  const ko = _dcard('Kickouts (own)', header +
-    _drow('Total', kA.total, kB.total) +
-    _drow('Won clean', kA.wc, kB.wc) +
-    _drow('Won break', kA.wb, kB.wb) +
-    _drow('Lost', kA.lc + kA.lb, kB.lc + kB.lb) +
-    _drow('Out of play', kA.oop, kB.oop) +
-    _drow('Win %', kA.pct + '%', kB.pct + '%'));
+  const ownKO = _dcard('Own kickouts', header +
+    _drow('Total', koA.own.total, koB.own.total) +
+    _drow('Won clean', koA.own.wc, koB.own.wc) +
+    _drow('Won break', koA.own.wb, koB.own.wb) +
+    _drow('Lost', koA.own.lost, koB.own.lost) +
+    _drow('Win %', koA.own.pct + '%', koB.own.pct + '%'));
+
+  const oppKO = _dcard('Opposition kickouts (won by this team)', header +
+    _drow('Total faced', koA.opp.total, koB.opp.total) +
+    _drow('Won', koA.opp.won, koB.opp.won) +
+    _drow('Lost', koA.opp.lost, koB.opp.lost) +
+    _drow('Win %', koA.opp.pct + '%', koB.opp.pct + '%'));
 
   const rows = _playerRows('A');
   let ptbl = `<div class="ptbl"><div class="pt-row pt-head"><span>Player</span><span>Pts</span><span>Sh</span><span>Cv%</span><span>TO</span></div>`;
@@ -100,6 +113,6 @@ function showDetail() {
     `<div class="d-cols"><span>scored/shots</span><span></span><span>conv</span></div>` +
     zrow('Inside 20m', z.in20) + zrow('20–40m', z.mid) + zrow('Beyond 40m (2pt)', z.far));
 
-  document.getElementById('detailBody').innerHTML = scoring + ko + players + zones;
+  document.getElementById('detailBody').innerHTML = scoring + ownKO + oppKO + players + zones;
   showScreen('detail');
 }

@@ -43,6 +43,10 @@ https URL or localhost.)
 
 ## Using it
 
+Open the app to a **home screen** — tap **New match** to set up a game, **Resume match** to continue one in progress, or **History & season**. The 🏠 button (top-left) returns home any time. There's a short splash on launch.
+
+During a match the **clock at the top keeps running** (it's the match clock); the **possession** timer underneath pauses whenever the ball's out of play, which is what drives the possession %.
+
 1. **Setup** — enter your team name, the opposition name, half length, and your starting 15's
    names (numbers are fixed 1–15). The opposition is tracked lighter — just jersey numbers. Tap
    **Start match**. Your squad is remembered for next time.

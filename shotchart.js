@@ -1,13 +1,11 @@
 /* ============================================================
    SidelineGAA — shot location capture + shot chart
-   Shares the global scope with app.js / stats.js.
    Pitch model: attacking half, goal at the TOP.
    loc = { x: 0..1 (left→right), y: 0..1 (goal-line→halfway) }
    ============================================================ */
 
 'use strict';
 
-/* Stylised half-pitch markings (viewBox 0 0 100 130). */
 function pitchMarkings() {
   return `
     <rect x="1.5" y="1.5" width="97" height="127" rx="3" fill="#2f7d4d" stroke="#cfe3d6" stroke-width="0.7"/>
@@ -22,7 +20,6 @@ function pitchMarkings() {
   `;
 }
 
-/* Sheet step: tap the pitch to record where a shot was taken (skippable). */
 function pickLocation(side, cb) {
   const body = document.getElementById('sheetBody');
   body.innerHTML = '';
@@ -52,7 +49,7 @@ function pickLocation(side, cb) {
   document.getElementById('overlay').classList.add('show');
 }
 
-/* Return an <svg> shot map for one side, plotting located scores & wides. */
+/* High-contrast markers so every shot reads clearly on the green pitch. */
 function renderShotChart(side) {
   const shots = state.events.filter(e =>
     e.loc && e.side === side && (e.kind === 'score' || e.kind === 'wide'));
@@ -61,15 +58,17 @@ function renderShotChart(side) {
     const cx = (2 + e.loc.x * 96).toFixed(1);
     const cy = (3 + e.loc.y * 124).toFixed(1);
     if (e.kind === 'wide') {
-      return `<circle cx="${cx}" cy="${cy}" r="2" fill="none" stroke="#b23a2e" stroke-width="0.9"/>`;
+      return `<circle cx="${cx}" cy="${cy}" r="2.4" fill="rgba(255,255,255,.4)"/>` +
+             `<circle cx="${cx}" cy="${cy}" r="2.4" fill="none" stroke="#b23a2e" stroke-width="1.2"/>`;
     }
     if (e.scoreType === 'g') {
-      return `<circle cx="${cx}" cy="${cy}" r="2.9" fill="#1b7a3d" stroke="#ffffff" stroke-width="0.9"/>`;
+      return `<circle cx="${cx}" cy="${cy}" r="3.6" fill="#1b7a3d" stroke="#ffffff" stroke-width="1.4"/>` +
+             `<circle cx="${cx}" cy="${cy}" r="1.2" fill="#ffffff"/>`;
     }
     if (e.scoreType === 'two') {
-      return `<circle cx="${cx}" cy="${cy}" r="2.5" fill="#1b7a3d" stroke="#f2b705" stroke-width="1.2"/>`;
+      return `<circle cx="${cx}" cy="${cy}" r="2.9" fill="#f2b705" stroke="#5e4900" stroke-width="0.8"/>`;
     }
-    return `<circle cx="${cx}" cy="${cy}" r="1.9" fill="#1b7a3d"/>`;
+    return `<circle cx="${cx}" cy="${cy}" r="2.6" fill="#1b7a3d" stroke="#ffffff" stroke-width="1.2"/>`;
   }).join('');
 
   const empty = shots.length === 0

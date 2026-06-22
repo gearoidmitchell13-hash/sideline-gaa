@@ -14,12 +14,37 @@
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+
+<!-- ===================== SPLASH ===================== -->
+<div class="splash" id="splash">
+  <img src="icons/icon-512.png" alt="">
+  <div class="splash-title">SidelineGAA</div>
+  <div class="splash-sub">Live Gaelic football stats</div>
+</div>
+
 <div class="app">
 
   <div class="appbar">
+    <button class="home-ic" id="homeBtn" style="visibility:hidden">🏠</button>
     <div class="brand"><img src="icons/icon-192.png" alt=""> SidelineGAA</div>
     <div class="tag" id="appTag">GAA stats · 2026 rules</div>
   </div>
+
+  <!-- ===================== HOME ===================== -->
+  <section class="screen home" id="screen-home">
+    <div class="home-hero">
+      <img src="icons/icon-512.png" class="home-logo" alt="">
+      <h1 class="home-title">SidelineGAA</h1>
+      <p class="home-tag">Live Gaelic football stats · 2026 rules</p>
+    </div>
+    <div class="home-menu">
+      <button class="home-btn home-primary" id="homeNew">▶  New match</button>
+      <button class="home-btn" id="homeResume" style="display:none">⏯  Resume match</button>
+      <button class="home-btn" id="homeHistory">📚  History &amp; season</button>
+      <button class="home-btn" id="homeAbout">ℹ️  About</button>
+    </div>
+    <div class="home-foot">Works offline · your data stays on this device</div>
+  </section>
 
   <!-- ===================== SETUP ===================== -->
   <section class="screen setup" id="screen-setup">
@@ -46,7 +71,6 @@
     <div class="hint">Opposition is tracked lighter — just jersey numbers (1–15), no names needed.</div>
 
     <button class="primary" id="startBtn">Start match ▶</button>
-    <button class="ghost" id="historyBtn">📚 History &amp; season</button>
     <button class="ghost" id="resetTeamsBtn">Reset to sample squad</button>
   </section>
 
@@ -96,10 +120,10 @@
     </div>
     <div id="sumChart"></div>
     <div class="chart-legend">
-      <span><i class="lg-dot" style="background:#1b7a3d"></i>Point</span>
-      <span><i class="lg-dot" style="background:#1b7a3d;box-shadow:0 0 0 2px #f2b705"></i>2-point</span>
-      <span><i class="lg-dot" style="background:#1b7a3d;box-shadow:0 0 0 2px #fff"></i>Goal</span>
-      <span><i class="lg-dot" style="border:2px solid #b23a2e;background:transparent"></i>Wide</span>
+      <span><i class="lg-dot" style="background:#1b7a3d;box-shadow:0 0 0 1.5px #fff"></i>Point</span>
+      <span><i class="lg-dot" style="background:#f2b705"></i>2-point</span>
+      <span><i class="lg-dot lg-goal" style="background:#1b7a3d;box-shadow:0 0 0 2px #fff"></i>Goal</span>
+      <span><i class="lg-dot" style="border:2px solid #b23a2e;background:#fff"></i>Wide</span>
     </div>
 
     <div class="stat-table" id="sumTable"></div>
@@ -123,7 +147,7 @@
   <!-- ===================== HISTORY ===================== -->
   <section class="screen history" id="screen-history">
     <div class="hist-head">
-      <button class="linkbtn" id="histBackBtn">‹ Setup</button>
+      <button class="linkbtn" id="histBackBtn">‹ Home</button>
       <b>History &amp; season</b>
       <span style="width:54px"></span>
     </div>

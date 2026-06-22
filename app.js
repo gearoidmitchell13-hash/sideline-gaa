@@ -113,11 +113,30 @@ function undo() {
    SCREEN ROUTING
    ============================================================ */
 function showScreen(name) {
-  ['setup', 'live', 'summary', 'history', 'detail'].forEach(s =>
+  ['home', 'setup', 'live', 'summary', 'history', 'detail'].forEach(s =>
     $('screen-' + s).classList.toggle('active', s === name));
   $('appTag').textContent = (name === 'live' && state)
     ? `${state.meta.aName} v ${state.meta.bName}`
     : 'GAA stats · 2026 rules';
+  const hb = $('homeBtn');
+  if (hb) hb.style.visibility = (name === 'home' || name === 'live') ? 'hidden' : 'visible';
+}
+
+/* ---------- home navigation ---------- */
+function goHome() { renderHome(); showScreen('home'); }
+function renderHome() {
+  const m = loadMatch();
+  const r = $('homeResume');
+  if (m && m.phase === 'live') {
+    r.style.display = 'block';
+    r.textContent = `⏯ Resume — ${m.meta.aName} ${gp(m.score.A)}–${gp(m.score.B)} ${m.meta.bName}`;
+  } else {
+    r.style.display = 'none';
+  }
+}
+function aboutSheet() {
+  openSheet('About SidelineGAA', [{ label: 'Done', cls: 'g', onClick: closeSheet }], 1,
+    'Live Gaelic football stat tracker, built on the 2026 FRC ruleset (two-pointers, solo-and-go frees, new kickouts). Works offline; your data stays on this device.');
 }
 
 /* ============================================================
@@ -176,9 +195,9 @@ function startMatch() {
 function startTimer() {
   if (timer) clearInterval(timer);
   timer = setInterval(() => {
-    if (!state || !state.running || state.phase !== 'live' || sheetOpen) return;
-    state.clock++;
-    if (state.possession) state.possTime[state.possession]++;
+    if (!state || !state.running || state.phase !== 'live') return;
+    state.clock++;                                                 // match clock runs through dead balls
+    if (state.possession && !sheetOpen) state.possTime[state.possession]++;  // possession pauses out of play
     renderClock(); renderPoss();
     if (state.clock % 3 === 0) saveMatch();
   }, 1000);
@@ -356,13 +375,13 @@ function commitTurn(t, to, n) {
 /* KICKOUT */
 function kickout(kt) {
   const ot = other(kt);
-  openSheet(`${teamName(kt)} kickout — outcome?`, [
+  openSheet(`${teamName(kt)} kickout — who won it?`, [
     { label: `Won clean<small>${teamName(kt)}</small>`, cls: kt === 'A' ? 'a' : 'b', onClick: () => commitKO(kt, 'wonClean', kt) },
     { label: `Won break<small>${teamName(kt)}</small>`, cls: kt === 'A' ? 'a' : 'b', onClick: () => commitKO(kt, 'wonBreak', kt) },
-    { label: `Lost clean<small>${teamName(ot)}</small>`, cls: ot === 'A' ? 'a' : 'b', onClick: () => commitKO(kt, 'lostClean', ot) },
-    { label: `Lost break<small>${teamName(ot)}</small>`, cls: ot === 'A' ? 'a' : 'b', onClick: () => commitKO(kt, 'lostBreak', ot) },
+    { label: `Won clean<small>${teamName(ot)}</small>`, cls: ot === 'A' ? 'a' : 'b', onClick: () => commitKO(kt, 'lostClean', ot) },
+    { label: `Won break<small>${teamName(ot)}</small>`, cls: ot === 'A' ? 'a' : 'b', onClick: () => commitKO(kt, 'lostBreak', ot) },
     { label: `Out of play → free ${teamName(ot)}`, onClick: () => commitKO(kt, 'outOfPlay', ot) }
-  ], 2, 'Kickout must clear the 40m arc (2026 rules). Winner gets possession.');
+  ], 2, `${teamName(kt)} takes the kickout — tap whichever team won the ball.`);
 }
 function commitKO(kt, outcome, winner) {
   pushHistory();
@@ -536,17 +555,23 @@ function init() {
   $('exportBtn').onclick = exportCSV;
   $('backLiveBtn').onclick = () => showScreen('live');
   $('newMatchBtn').onclick = () => { if (state && state.phase !== 'ended' && typeof confirm === 'function' && !confirm('Discard this match? It is not saved to history.')) return; clearMatch(); state = null; undoStack = []; renderSetup(); showScreen('setup'); };
-  $('historyBtn').onclick = () => showHistory();
-  $('histBackBtn').onclick = () => { renderSetup(); showScreen('setup'); };
+  $('histBackBtn').onclick = () => goHome();
   $('printBtn').onclick = () => window.print();
   $('detailBtn').onclick = () => showDetail();
   $('detailBackBtn').onclick = () => showScreen('summary');
 
-  // route based on saved match
-  const m = loadMatch();
-  if (m && m.phase === 'live') { state = m; bindLive(); showScreen('live'); render(); startTimer(); }
-  else if (m && m.phase === 'ended') { state = m; bindLive(); showSummary(); startTimer(); }
-  else { renderSetup(); showScreen('setup'); startTimer(); }
+  // home screen buttons
+  $('homeNew').onclick = () => { renderSetup(); showScreen('setup'); };
+  $('homeResume').onclick = () => { const m = loadMatch(); if (m) { state = m; bindLive(); showScreen('live'); render(); } };
+  $('homeHistory').onclick = () => showHistory();
+  $('homeAbout').onclick = () => aboutSheet();
+  $('homeBtn').onclick = () => goHome();
+
+  renderSetup();
+  renderHome();
+  showScreen('home');
+  startTimer();
+  setTimeout(() => { const sp = $('splash'); if (sp) sp.classList.add('hide'); }, 950);
 }
 
 document.addEventListener('DOMContentLoaded', init);

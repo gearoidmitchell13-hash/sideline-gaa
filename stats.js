@@ -47,6 +47,7 @@ function topScorer(side) {
 /* ---------- summary screen ----------
    backTo: 'history' when viewing a saved match (Back returns to history). */
 function showSummary(backTo) {
+  _chartSide = 'A';   // always default the shot map to your team
   const A = statsFor('A'), B = statsFor('B');
   const win = total(state.score.A) === total(state.score.B) ? 'Draw'
     : (total(state.score.A) > total(state.score.B) ? state.meta.aName + ' win' : state.meta.bName + ' win');
