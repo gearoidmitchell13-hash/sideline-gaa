@@ -62,7 +62,7 @@ function renderShotChart(side) {
              `<circle cx="${cx}" cy="${cy}" r="2.4" fill="none" stroke="#b23a2e" stroke-width="1.2"/>`;
     }
     if (e.scoreType === 'g') {
-      return `<circle cx="${cx}" cy="${cy}" r="3.6" fill="#1b7a3d" stroke="#ffffff" stroke-width="1.4"/>` +
+      return `<circle cx="${cx}" cy="${cy}" r="3.6" fill="#2563eb" stroke="#ffffff" stroke-width="1.4"/>` +
              `<circle cx="${cx}" cy="${cy}" r="1.2" fill="#ffffff"/>`;
     }
     if (e.scoreType === 'two') {

@@ -43,28 +43,30 @@ https URL or localhost.)
 
 ## Using it
 
-Open the app to a **home screen** — tap **New match** to set up a game, **Resume match** to continue one in progress, or **History & season**. The 🏠 button (top-left) returns home any time. There's a short splash on launch.
+Open the app to a **home screen** — tap **New match**, **Resume match**, **History & season**, or **Teams & squads**. The 🏠 button (top-left) returns home any time. There's a short splash on launch.
 
 During a match the **clock at the top keeps running** (it's the match clock); the **possession** timer underneath pauses whenever the ball's out of play, which is what drives the possession %.
 
-1. **Setup** — enter your team name, the opposition name, half length, and your starting 15's
-   names (numbers are fixed 1–15). The opposition is tracked lighter — just jersey numbers. Tap
-   **Start match**. Your squad is remembered for next time.
-2. **Throw-in** — tap it, choose who won possession; the clock and possession timer start.
-3. **Track** — the action bar shows only what can happen next: **Score / Wide / Free won /
+1. **Squads** — in **Teams & squads** (home menu) save a **full panel per team** (Junior A, Junior C…) once: jersey numbers, names, positions. Reuse any match.
+2. **Setup** — pick your **squad** from the dropdown, tap to choose the **starting 15** (the rest are your bench), enter the opposition, **competition + level/grade**, and half length. Subs during the match come from the saved panel.
+3. **Throw-in** — tap it, choose who won possession; the clock and possession timer start.
+4. **Track** — the action bar shows only what can happen next: **Score / Wide / Free won /
    Turnover / Foul**. A score asks type (Point / **2-Point** / Goal) → scorer → source, then the
-   **kickout sheet opens automatically**.
-4. **Misses are realistic** — choosing Wide/Miss asks the type: **Wide** (over the line → kickout), or **Dropped short / Saved / Blocked**, which stay in play so you pick who won the loose ball; a blocked shot can also go **out for a 45**. A missed **free** now captures the taker and location too.
-5. **Undo** rolls back the last event, or **tap any event in the feed** to fix its player or delete it (score and possession re-derive automatically). **⋯** has substitution, half-time, pause, **🏠 Home (keeps the match saved)**, and new match. The **screen stays awake** during a match; discarding/ending asks for confirmation.
-6. **Shot location** — after a score or wide, tap roughly where on the pitch it was taken (or
+   **kickout sheet opens automatically**. **Goal / Point / 2-Point** have distinct colours (blue / green / gold) matching the shot map, and the score-source step defaults to a big **From play** with smaller placed-ball options.
+   **Free won** records the **foul against the conceding
+   team** (type + opposition jersey, skippable) before you take or tap-and-go the free — so frees
+   won/conceded, fouls and cards are all attributed. The summary's Detailed stats has a Discipline card.
+5. **Misses are realistic** — choosing Wide/Miss asks the type: **Wide** (over the line → kickout), or **Dropped short / Saved / Blocked**, which stay in play so you pick who won the loose ball; a blocked shot can also go **out for a 45**. A kickout that goes out is recorded as a **sideline ball**, not a free. A missed **free** captures the taker and location too.
+6. **Undo** rolls back the last event, or **tap any event in the feed** to fix its player or delete it (score and possession re-derive automatically). Logging a **Foul committed** asks the **player** then a card (default **No card**, with Yellow / Black / Red as quick secondary options); a **Black card** starts a **10-minute sin-bin timer** shown live. **⋯** has substitution, half-time, pause, **🏠 Home (keeps the match saved)**, and new match. The **screen stays awake** during a match; discarding/ending asks for confirmation.
+7. **Shot location** — after a score or wide, tap roughly where on the pitch it was taken (or
    **Skip**). These build the shot map.
-7. **Live stats / full-time** — tap **Live stats** any time, or end the match for the full
+8. **Live stats / full-time** — tap **Live stats** any time, or end the match for the full
    summary with a **shot chart** (toggle between teams), **Print / Save PDF** for a one-page
    report, and **Export CSV** of the raw events + stats (including shot X/Y).
    - **📈 Detailed stats** (button on the summary) breaks down scoring by source (play / frees /
      dead balls) and type, kickouts won/lost, a per-player table (points, shots, conversion,
      turnovers), and shot conversion by pitch zone (inside 20m / 20–40m / beyond the 40m arc).
-8. **History & season** — finished matches are saved automatically. Open **History & season**
+9. **History & season** — finished matches are saved automatically. Open **History & season**
    from the start screen to see your record, points for/against, season top scorers, and to
    reopen or delete any past match.
 
@@ -89,11 +91,13 @@ SidelineGAA-PWA/
 ├─ history.js          saved matches + season aggregation
 ├─ detail.js           detailed stats (breakdowns, per-player, zones)
 ├─ live.js             wake lock + edit/delete events (score/possession recompute)
+├─ squads.js           multi-squad management + match-day squad/starting-15 picker
 ├─ sw.js               service worker (offline cache)
 ├─ manifest.webmanifest  app name, colours, icons, standalone display
 └─ icons/             home-screen + maskable icons
 ```
 
-## Roadmap (still on the list)
-- Possession chains and richer Pro-mode detail.
-- One-tap share of the CSV/report.
+## Roadmap (next up)
+- Re-introduce a meaningful **tracking-depth** control (gates how much player-level detail is asked).
+- Sin-bin player availability shown in the sub picker; possession chains; one-tap share of CSV/report.
+- Optionally track the opposition from a saved squad too (currently jersey-only).

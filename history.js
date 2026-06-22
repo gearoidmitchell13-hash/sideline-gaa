@@ -92,7 +92,7 @@ function showHistory() {
     row.innerHTML = `
       <div class="hi-main">
         <div class="hi-teams">${escapeHtml(m.meta.aName)} <b>${gp(m.score.A)}</b> – <b>${gp(m.score.B)}</b> ${escapeHtml(m.meta.bName)}</div>
-        <div class="hi-sub">${fmtDate(m.savedAt)} · ${total(m.score.A)}–${total(m.score.B)} <span class="res ${res}">${res}</span></div>
+        <div class="hi-sub">${m.meta.competition ? escapeHtml(m.meta.competition) + ' · ' : ''}${fmtDate(m.savedAt)} · ${total(m.score.A)}–${total(m.score.B)} <span class="res ${res}">${res}</span></div>
       </div>
       <button class="hi-del" aria-label="delete">✕</button>`;
     row.querySelector('.hi-main').onclick = () => viewArchivedMatch(m.id);

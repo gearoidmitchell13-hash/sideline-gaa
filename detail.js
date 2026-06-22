@@ -113,6 +113,12 @@ function showDetail() {
     `<div class="d-cols"><span>scored/shots</span><span></span><span>conv</span></div>` +
     zrow('Inside 20m', z.in20) + zrow('20–40m', z.mid) + zrow('Beyond 40m (2pt)', z.far));
 
-  document.getElementById('detailBody').innerHTML = scoring + ownKO + oppKO + players + zones;
+  const stA = statsFor('A'), stB = statsFor('B');
+  const disc = _dcard('Discipline', header +
+    _drow('Frees won', stA.fw, stB.fw) +
+    _drow('Frees conceded', stA.fc, stB.fc) +
+    _drow('Yellow / Black / Red', `${stA.y}/${stA.bl}/${stA.rd}`, `${stB.y}/${stB.bl}/${stB.rd}`));
+
+  document.getElementById('detailBody').innerHTML = scoring + ownKO + oppKO + disc + players + zones;
   showScreen('detail');
 }

@@ -33,7 +33,7 @@ const FOUL_LABEL  = { overcarry: 'Overcarry', charge: 'Charge', throwball: 'Thro
 const TO_LABEL    = { tackle: 'Lost in tackle', kick: 'Bad kick pass', hand: 'Handpass error',
   carry: 'Overcarry', intercept: 'Intercepted', fumble: 'Fumbled' };
 const KO_LABEL    = { wonClean: 'Won clean', wonBreak: 'Won break', lostClean: 'Lost clean',
-  lostBreak: 'Lost break', outOfPlay: 'Out of play' };
+  lostBreak: 'Lost break', outOfPlay: 'Out → sideline' };
 
 /* ---------- state ---------- */
 let state = null;
@@ -76,14 +76,14 @@ function clearMatch() { try { localStorage.removeItem(LS_MATCH); } catch (e) {} 
 /* ============================================================
    MATCH LIFECYCLE
    ============================================================ */
-function freshMatch(meta, squadA, benchA) {
+function freshMatch(meta, panelA, onFieldA) {
   const squadB = Array.from({ length: 15 }, (_, i) => ({ n: i + 1, name: '' }));
   return {
-    meta, squadA, benchA, squadB,
+    meta, squadA: panelA, onFieldA: onFieldA.slice(), squadB,
     phase: 'pregame', period: 'H1', clock: 0, running: false,
     possession: null, possTime: { A: 0, B: 0 },
     score: { A: { g: 0, two: 0, one: 0 }, B: { g: 0, two: 0, one: 0 } },
-    events: []
+    events: [], sinBins: []
   };
 }
 
@@ -113,7 +113,7 @@ function undo() {
    SCREEN ROUTING
    ============================================================ */
 function showScreen(name) {
-  ['home', 'setup', 'live', 'summary', 'history', 'detail'].forEach(s =>
+  ['home', 'setup', 'live', 'summary', 'history', 'detail', 'squads'].forEach(s =>
     $('screen-' + s).classList.toggle('active', s === name));
   $('appTag').textContent = (name === 'live' && state)
     ? `${state.meta.aName} v ${state.meta.bName}`
@@ -143,18 +143,7 @@ function aboutSheet() {
    SETUP SCREEN
    ============================================================ */
 function renderSetup() {
-  const t = loadTeams();
-  $('aName').value = t.aName;
-  $('bName').value = t.bName;
-  const wrap = $('rosterA'); wrap.innerHTML = '';
-  t.squadA.forEach(p => {
-    const row = document.createElement('div'); row.className = 'r';
-    row.innerHTML = `<span class="num">${p.n}</span>` +
-      `<input data-n="${p.n}" value="${escapeHtml(p.name)}" placeholder="Player ${p.n}" maxlength="18">`;
-    wrap.appendChild(row);
-  });
-  [...$('depthSeg').children].forEach(b => b.classList.toggle('on', b.dataset.d === setupDepth));
-  // resume banner
+  renderSquadPicker();
   const m = loadMatch();
   const box = $('resumeBox'); box.innerHTML = '';
   if (m && m.phase === 'live') {
@@ -170,21 +159,16 @@ function renderSetup() {
   }
 }
 
-function readSetupRoster() {
-  return [...$('rosterA').querySelectorAll('input')].map(inp => ({
-    n: Number(inp.dataset.n), name: inp.value.trim()
-  }));
-}
 
 function startMatch() {
-  const aName = $('aName').value.trim() || 'Your team';
   const bName = $('bName').value.trim() || 'Opposition';
   const half = Math.max(1, Math.min(45, Number($('halfLen').value) || 30));
-  const squadA = readSetupRoster();
-  const benchA = loadTeams().benchA || [16, 17, 18, 19, 20, 21];
-  saveTeams({ aName, bName, squadA, benchA });
-  const meta = { aName, bName, half, depth: setupDepth, ourSide: 'A' };
-  state = freshMatch(meta, squadA, benchA);
+  const sq = getMatchSquad();
+  const aName = sq.name || 'Your team';
+  const competition = ($('compName') ? $('compName').value.trim() : '');
+  const level = ($('compLevel') ? $('compLevel').value.trim() : '');
+  const meta = { aName, bName, half, depth: setupDepth, ourSide: 'A', competition, level };
+  state = freshMatch(meta, sq.panel, sq.onField);
   undoStack = [];
   saveMatch(); bindLive(); showScreen('live'); render(); startTimer();
 }
@@ -198,7 +182,7 @@ function startTimer() {
     if (!state || !state.running || state.phase !== 'live') return;
     state.clock++;                                                 // match clock runs through dead balls
     if (state.possession && !sheetOpen) state.possTime[state.possession]++;  // possession pauses out of play
-    renderClock(); renderPoss();
+    renderClock(); renderPoss(); renderSinBins();
     if (state.clock % 3 === 0) saveMatch();
   }, 1000);
 }
@@ -224,11 +208,14 @@ function openSheet(title, items, cols, note) {
   body.appendChild(c);
   sheetOpen = true; $('overlay').classList.add('show');
 }
-function pickPlayer(side, title, cb) {
+function pickPlayer(side, title, cb, onSkip) {
   const body = $('sheetBody'); body.innerHTML = '';
   const h = document.createElement('div'); h.className = 'sh-title'; h.textContent = title; body.appendChild(h);
   const g = document.createElement('div'); g.className = 'pgrid';
-  squad(side).forEach(p => {
+  const list = side === 'A'
+    ? state.squadA.filter(p => (state.onFieldA || []).includes(p.n)).sort((a, b) => a.n - b.n)
+    : squad('B');
+  list.forEach(p => {
     const c = document.createElement('div');
     c.className = 'pcell' + (side === 'B' ? ' b' : '');
     c.innerHTML = `<span class="pn">${p.n}</span>` + (side === 'A' && p.name ? `<span class="pnm">${escapeHtml(p.name)}</span>` : '');
@@ -236,6 +223,11 @@ function pickPlayer(side, title, cb) {
     g.appendChild(c);
   });
   body.appendChild(g);
+  if (onSkip) {
+    const sk = document.createElement('div'); sk.className = 'sh-cancel';
+    sk.style.color = 'var(--green-d)'; sk.style.fontWeight = '800';
+    sk.textContent = 'Skip — just the team'; sk.onclick = onSkip; body.appendChild(sk);
+  }
   const c = document.createElement('div'); c.className = 'sh-cancel'; c.textContent = 'Cancel'; c.onclick = closeSheet;
   body.appendChild(c);
   sheetOpen = true; $('overlay').classList.add('show');
@@ -244,10 +236,17 @@ function pickBench(off) {
   const body = $('sheetBody'); body.innerHTML = '';
   const h = document.createElement('div'); h.className = 'sh-title'; h.textContent = 'Bench player coming ON'; body.appendChild(h);
   const g = document.createElement('div'); g.className = 'pgrid';
-  state.benchA.forEach(n => {
+  const bench = state.squadA.filter(p => !(state.onFieldA || []).includes(p.n)).sort((a, b) => a.n - b.n);
+  if (!bench.length) { const e = document.createElement('div'); e.className = 'pt-empty'; e.textContent = 'No bench players in this squad'; body.appendChild(e); }
+  bench.forEach(p => {
     const c = document.createElement('div'); c.className = 'pcell';
-    c.innerHTML = `<span class="pn">${n}</span>`;
-    c.onclick = () => { pushHistory(); addEvent({ kind: 'sub', side: 'A', off, on: n }); closeSheet(); render(); saveMatch(); };
+    c.innerHTML = `<span class="pn">${p.n}</span>` + (p.name ? `<span class="pnm">${escapeHtml(p.name)}</span>` : '');
+    c.onclick = () => {
+      pushHistory();
+      state.onFieldA = (state.onFieldA || []).filter(x => x !== off).concat(p.n);
+      addEvent({ kind: 'sub', side: 'A', off, on: p.n });
+      closeSheet(); render(); saveMatch();
+    };
     g.appendChild(c);
   });
   body.appendChild(g);
@@ -275,17 +274,23 @@ function onScore() {
   const t = state.possession;
   openSheet('Score — what type?', [
     { label: 'Point<small>1 pt</small>', cls: 'g', onClick: () => scorePlayer(t, 'one') },
-    { label: '2-Point<small>2 pts</small>', cls: 'g', onClick: () => scorePlayer(t, 'two') },
-    { label: 'Goal<small>3 pts</small>', cls: 'g', onClick: () => scorePlayer(t, 'g') }
+    { label: '2-Point<small>2 pts</small>', cls: 'go', onClick: () => scorePlayer(t, 'two') },
+    { label: '⚽ GOAL<small>3 pts</small>', cls: 'blue', onClick: () => scorePlayer(t, 'g') }
   ], 3, '2-pointer is asked explicitly (on/outside the 40m arc).');
 }
 function scorePlayer(t, kind) {
   pickPlayer(t, t === 'A' ? 'Who scored?' : 'Scorer — jersey #', n => scoreSource(t, kind, n));
 }
 function scoreSource(t, kind, n) {
-  const mk = src => ({ label: SOURCE_LABEL[src], onClick: () => pickLocation(t, loc => commitScore(t, kind, n, src, loc)) });
-  openSheet('Source of score?',
-    ['play', 'free', '45', 'mark', 'sideline', 'pen'].map(mk), 3);
+  const src = s => pickLocation(t, loc => commitScore(t, kind, n, s, loc));
+  openSheet('How was it scored?', [
+    { label: 'From play', cls: 'g span', onClick: () => src('play') },
+    { label: 'Free', cls: 'ghost', onClick: () => src('free') },
+    { label: '45', cls: 'ghost', onClick: () => src('45') },
+    { label: 'Mark', cls: 'ghost', onClick: () => src('mark') },
+    { label: 'Sideline', cls: 'ghost', onClick: () => src('sideline') },
+    { label: 'Penalty', cls: 'ghost', onClick: () => src('pen') }
+  ], 3, 'Most scores are from play (the big button). Tap a placed-ball source only if needed.');
 }
 function commitScore(t, kind, n, source, loc) {
   pushHistory();
@@ -344,43 +349,79 @@ function blockedOutcome(t) {
 
 /* FREE WON */
 function onFreeWon() {
-  const t = state.possession;
+  const t = state.possession, ot = other(t);
+  const mk = f => ({ label: FOUL_LABEL[f], onClick: () => freeFoulPlayer(t, f) });
+  openSheet(`Free to ${teamName(t)} — foul by ${teamName(ot)}?`,
+    ['tackle', 'hold', 'overcarry', 'dissent', 'square', 'other'].map(mk), 3,
+    'Records the foul against the conceding team, then take the free.');
+}
+function freeFoulPlayer(t, foulType) {
+  const ot = other(t);
+  pickPlayer(ot, `Foul by — ${teamName(ot)} jersey?`,
+    n => askCard(card => freeFoulCommit(t, foulType, n, card)),
+    () => askCard(card => freeFoulCommit(t, foulType, null, card)));
+}
+function freeFoulCommit(t, foulType, foulerN, card) {
+  pushHistory();
+  addEvent({ kind: 'foul', side: other(t), foulType, card, player: foulerN, free: true });
+  state.possession = t;
+  if (card === 'black') startSinBin(other(t), foulerN);
+  saveMatch();
   openSheet('Free won — outcome?', [
     { label: 'Point · 1', cls: 'g', onClick: () => freeScore(t, 'one') },
-    { label: '2-Point · 2', cls: 'g', onClick: () => freeScore(t, 'two') },
-    { label: 'Goal · 3', cls: 'g', onClick: () => freeScore(t, 'g') },
+    { label: '2-Point · 2', cls: 'go', onClick: () => freeScore(t, 'two') },
+    { label: '⚽ Goal · 3', cls: 'blue', onClick: () => freeScore(t, 'g') },
     { label: 'Wide / miss', onClick: () => startMiss(t, 'free') },
-    { label: 'Tap &amp; go — keep ball', cls: 'go', onClick: () => tapGo(t) }
-  ], 2, 'Solo-and-go keeps possession without a stoppage.');
+    { label: 'Tap &amp; go — play on', cls: 'g span', onClick: () => { closeSheet(); render(); } }
+  ], 2, 'Shoot the free, or tap &amp; go to keep the ball.');
 }
 function freeScore(t, kind) {
   pickPlayer(t, t === 'A' ? 'Free taken by?' : 'Free taker — jersey #', n => pickLocation(t, loc => commitScore(t, kind, n, 'free', loc)));
-}
-function tapGo(t) {
-  pushHistory(); addEvent({ kind: 'freeWon', side: t }); state.possession = t;
-  closeSheet(); render(); saveMatch();
 }
 
 /* FOUL COMMITTED */
 function onFoul() {
   const t = state.possession;
-  const mk = f => ({ label: FOUL_LABEL[f], onClick: () => foulCard(t, f) });
+  const mk = f => ({ label: FOUL_LABEL[f], onClick: () => foulPlayer(t, f) });
   openSheet(`Foul by ${teamName(t)} — type?`,
     ['overcarry', 'charge', 'throwball', 'dissent', 'square', 'other'].map(mk), 3);
 }
-function foulCard(t, f) {
-  openSheet('Card?', [
-    { label: 'None', onClick: () => commitFoul(t, f, '') },
-    { label: 'Yellow', cls: 'go', onClick: () => commitFoul(t, f, 'yellow') },
-    { label: 'Black', cls: 'grey', onClick: () => commitFoul(t, f, 'black') },
-    { label: 'Red', cls: 'b', onClick: () => commitFoul(t, f, 'red') }
-  ], 4);
+function foulPlayer(t, f) {
+  pickPlayer(t, t === 'A' ? 'Foul by — which player?' : 'Foul by — jersey?',
+    n => askCard(card => commitFoulFull(t, f, n, card)),
+    () => askCard(card => commitFoulFull(t, f, null, card)));
 }
-function commitFoul(t, f, card) {
+function askCard(cb) {
+  openSheet('Card?', [
+    { label: 'No card', cls: 'g span', onClick: () => cb('') },
+    { label: 'Yellow', cls: 'go', onClick: () => cb('yellow') },
+    { label: 'Black (10-min)', cls: 'grey', onClick: () => cb('black') },
+    { label: 'Red', cls: 'b', onClick: () => cb('red') }
+  ], 3, 'Most fouls have no card. Black = 10-minute sin bin.');
+}
+function commitFoulFull(t, f, player, card) {
   pushHistory();
-  addEvent({ kind: 'foul', side: t, foulType: f, card });
+  addEvent({ kind: 'foul', side: t, foulType: f, card, player });
   state.possession = other(t);
+  if (card === 'black') startSinBin(t, player);
   closeSheet(); render(); saveMatch();
+}
+function startSinBin(side, player) {
+  if (player == null) return;
+  if (!state.sinBins) state.sinBins = [];
+  state.sinBins.push({ side, player, until: state.clock + 600 });   // 10 minutes
+}
+function renderSinBins() {
+  const el = $('sinBins'); if (!el) return;
+  const bins = (state.sinBins || []).filter(b => b.until > state.clock);
+  if (!bins.length) { el.style.display = 'none'; el.innerHTML = ''; return; }
+  el.style.display = 'flex';
+  el.innerHTML = bins.map(b => {
+    const rem = b.until - state.clock;
+    const mmss = `${Math.floor(rem / 60)}:${String(rem % 60).padStart(2, '0')}`;
+    const who = (b.side === 'A' && playerName('A', b.player)) ? `#${b.player} ${playerName('A', b.player)}` : `#${b.player}`;
+    return `<span class="sinbin ${b.side}">⬛ ${teamName(b.side)} ${who} · ${mmss} left</span>`;
+  }).join('');
 }
 
 /* TURNOVER */
@@ -409,7 +450,7 @@ function kickout(kt) {
     { label: `Won break<small>${teamName(kt)}</small>`, cls: kt === 'A' ? 'a' : 'b', onClick: () => commitKO(kt, 'wonBreak', kt) },
     { label: `Won clean<small>${teamName(ot)}</small>`, cls: ot === 'A' ? 'a' : 'b', onClick: () => commitKO(kt, 'lostClean', ot) },
     { label: `Won break<small>${teamName(ot)}</small>`, cls: ot === 'A' ? 'a' : 'b', onClick: () => commitKO(kt, 'lostBreak', ot) },
-    { label: `Out of play → free ${teamName(ot)}`, onClick: () => commitKO(kt, 'outOfPlay', ot) }
+    { label: `Out over line → sideline ${teamName(ot)}`, cls: 'span', onClick: () => commitKO(kt, 'outOfPlay', ot) }
   ], 2, `${teamName(kt)} takes the kickout — tap whichever team won the ball.`);
 }
 function commitKO(kt, outcome, winner) {
@@ -524,7 +565,7 @@ function feedText(ev) {
     }
     case 'wide': return plabel(ev.side, ev.player) + (MISS_LABEL[ev.missType] || 'miss').toLowerCase() + (ev.source === 'free' ? ' (free)' : '');
     case 'freeWon': return 'Free won — played on';
-    case 'foul': return (FOUL_LABEL[ev.foulType] || 'Foul') + (ev.card ? ` · ${ev.card.toUpperCase()} card` : '') + ` → free to ${teamName(other(ev.side))}`;
+    case 'foul': return plabel(ev.side, ev.player) + (FOUL_LABEL[ev.foulType] || 'Foul') + (ev.card ? ` · ${ev.card.toUpperCase()} card` : '') + ` → free to ${teamName(other(ev.side))}`;
     case 'turnover': return plabel(ev.side, ev.player) + (TO_LABEL[ev.toType] || 'turnover').toLowerCase() + ` → ${teamName(other(ev.side))} ball`;
     case 'kickout': return `${teamName(ev.by)} kickout ${(KO_LABEL[ev.outcome] || '').toLowerCase()}`;
     case 'sub': return `#${ev.on} on for #${ev.off}` + (playerName('A', ev.off) ? ` ${playerName('A', ev.off)}` : '');
@@ -549,7 +590,12 @@ function renderFeed() {
 }
 function render() {
   if (!state) return;
-  bindLive(); renderScore(); renderClock(); renderPoss(); renderContext(); renderFeed();
+  if (!state.sinBins) state.sinBins = [];
+  if (!state.onFieldA) {
+    state.onFieldA = (state.squadA || []).map(p => p.n);
+    if (state.benchA) state.benchA.forEach(n => { if (!state.squadA.find(p => p.n === n)) state.squadA.push({ n, name: '' }); });
+  }
+  bindLive(); renderScore(); renderClock(); renderPoss(); renderContext(); renderFeed(); renderSinBins();
   $('undoBtn').disabled = undoStack.length === 0;
   updateWakeLock();
 }
@@ -570,11 +616,10 @@ function escapeHtml(str) {
 function init() {
   // setup listeners
   $('startBtn').onclick = startMatch;
-  $('resetTeamsBtn').onclick = () => { saveTeams(defaultTeams()); renderSetup(); };
-  [...$('depthSeg').children].forEach(b => b.onclick = () => {
+  { const _seg = $('depthSeg'); if (_seg) [..._seg.children].forEach(b => b.onclick = () => {
     setupDepth = b.dataset.d;
-    [...$('depthSeg').children].forEach(x => x.classList.toggle('on', x === b));
-  });
+    [..._seg.children].forEach(x => x.classList.toggle('on', x === b));
+  }); }
   // live listeners
   $('undoBtn').onclick = undo;
   $('moreBtn').onclick = moreMenu;
@@ -596,6 +641,9 @@ function init() {
   $('homeHistory').onclick = () => showHistory();
   $('homeAbout').onclick = () => aboutSheet();
   $('homeBtn').onclick = () => goHome();
+  $('homeTeams').onclick = () => showSquads();
+  $('squadsBackBtn').onclick = () => goHome();
+  $('manageSquadsBtn').onclick = () => showSquads();
 
   renderSetup();
   renderHome();

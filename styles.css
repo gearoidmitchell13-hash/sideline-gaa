@@ -226,3 +226,28 @@ button{touch-action:manipulation}
 .splash-sub{color:rgba(255,255,255,.85);font-size:13px;font-weight:600}
 .splash.hide{opacity:0;pointer-events:none}
 .lg-goal{width:14px;height:14px}
+
+/* full-width primary option in sheets */
+.sh-opt.span{grid-column:1/-1}
+/* sin-bin banner */
+.sinbins{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;justify-content:center}
+.sinbin{font-size:11px;font-weight:800;padding:4px 11px;border-radius:999px;
+        background:rgba(20,36,28,.08);color:var(--ink);border:1px solid var(--line)}
+.sinbin.A{background:rgba(27,122,61,.13);color:var(--teamA);border-color:rgba(27,122,61,.3)}
+.sinbin.B{background:rgba(178,58,46,.13);color:var(--teamB);border-color:rgba(178,58,46,.3)}
+
+/* squads & starting-15 selector */
+.field select{width:100%;padding:12px;border:1.5px solid var(--line);border-radius:11px;font-size:16px;background:#fff;color:var(--ink);-webkit-appearance:menulist}
+.muted-count{font-size:12px;font-weight:700;color:var(--muted)}
+.starters{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
+.starter{padding:9px 11px;border:1.5px solid var(--line);background:#fff;border-radius:11px;font-weight:800;font-size:13px;color:var(--ink)}
+.starter.on{background:var(--green);color:#fff;border-color:var(--green)}
+.squad-row{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px}
+.squad-row .sq-main{flex:1;min-width:0}
+.sq-name{font-weight:800;font-size:14px}
+.sq-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.sq-del{background:none;border:none;color:var(--muted);font-size:16px;padding:6px 8px}
+.panel-row{display:grid;grid-template-columns:52px 1fr 50px 30px;gap:6px;align-items:center;margin-bottom:6px}
+.panel-row input{padding:9px 8px;border:1.5px solid var(--line);border-radius:9px;font-size:15px;background:#fff;color:var(--ink)}
+.panel-row .pr-num,.panel-row .pr-pos{text-align:center;padding:9px 2px}
+.panel-row .pr-del{background:none;border:none;color:var(--muted);font-size:15px}

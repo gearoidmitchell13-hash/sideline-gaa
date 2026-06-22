@@ -27,10 +27,14 @@ function statsFor(side) {
     } else if (ev.kind === 'turnover') {
       if (ev.side === side) s.toLost++; else if (ev.side === other(side)) s.toWon++;
     } else if (ev.kind === 'freeWon' && ev.side === side) {
-      s.fw++;
-    } else if (ev.kind === 'foul' && ev.side === side) {
-      s.fc++;
-      if (ev.card === 'yellow') s.y++; else if (ev.card === 'black') s.bl++; else if (ev.card === 'red') s.rd++;
+      s.fw++;                                    // legacy event
+    } else if (ev.kind === 'foul') {
+      if (ev.side === side) {
+        s.fc++;
+        if (ev.card === 'yellow') s.y++; else if (ev.card === 'black') s.bl++; else if (ev.card === 'red') s.rd++;
+      } else if (ev.side === other(side)) {
+        s.fw++;                                  // opponent fouled = we won a free
+      }
     }
   });
   s.conv = s.shots ? Math.round(s.scores / s.shots * 100) : 0;
@@ -53,9 +57,10 @@ function showSummary(backTo) {
     : (total(state.score.A) > total(state.score.B) ? state.meta.aName + ' win' : state.meta.bName + ' win');
 
   // print-only report header
+  const _comp = [state.meta.competition, state.meta.level].filter(Boolean).join(' · ');
   document.getElementById('reportHead').innerHTML =
     `<div class="rep-title">${escapeHtml(state.meta.aName)} vs ${escapeHtml(state.meta.bName)}</div>` +
-    `<div class="rep-meta">SidelineGAA match report · ${new Date(state.savedAt || Date.now()).toLocaleDateString()}</div>`;
+    `<div class="rep-meta">${_comp ? escapeHtml(_comp) + ' · ' : ''}${new Date(state.savedAt || Date.now()).toLocaleDateString()}</div>`;
 
   document.getElementById('sumScore').innerHTML =
     `<div class="team A"><div class="nm">${escapeHtml(state.meta.aName)}</div><div class="sc">${gp(state.score.A)}</div><div class="tot">${total(state.score.A)} pts</div></div>` +

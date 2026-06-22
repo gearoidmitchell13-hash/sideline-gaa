@@ -15,7 +15,6 @@
 </head>
 <body>
 
-<!-- ===================== SPLASH ===================== -->
 <div class="splash" id="splash">
   <img src="icons/icon-512.png" alt="">
   <div class="splash-title">SidelineGAA</div>
@@ -41,6 +40,7 @@
       <button class="home-btn home-primary" id="homeNew">▶  New match</button>
       <button class="home-btn" id="homeResume" style="display:none">⏯  Resume match</button>
       <button class="home-btn" id="homeHistory">📚  History &amp; season</button>
+      <button class="home-btn" id="homeTeams">👥  Teams &amp; squads</button>
       <button class="home-btn" id="homeAbout">ℹ️  About</button>
     </div>
     <div class="home-foot">Works offline · your data stays on this device</div>
@@ -50,28 +50,25 @@
   <section class="screen setup" id="screen-setup">
     <div id="resumeBox"></div>
 
-    <div class="two-col">
-      <div class="field"><label>Your team</label><input id="aName" maxlength="22" placeholder="Naomh Pádraig"></div>
-      <div class="field"><label>Opposition</label><input id="bName" maxlength="22" placeholder="Erins Own"></div>
+    <div class="field"><label>Your team (squad)</label>
+      <select id="squadSel"></select>
     </div>
+    <button class="ghost" id="manageSquadsBtn" style="margin-top:0">👥 Manage squads</button>
+
+    <div class="field" style="margin-top:12px"><label>Opposition</label><input id="bName" maxlength="22" placeholder="Erins Own"></div>
 
     <div class="two-col">
-      <div class="field"><label>Half length (min)</label><input id="halfLen" type="number" inputmode="numeric" min="1" max="45" value="30"></div>
-      <div class="field"><label>Tracking depth</label>
-        <div class="seg" id="depthSeg">
-          <button data-d="quick">Quick</button>
-          <button data-d="standard" class="on">Standard</button>
-          <button data-d="pro">Pro</button>
-        </div>
-      </div>
+      <div class="field"><label>Competition</label><input id="compName" maxlength="28" placeholder="County League"></div>
+      <div class="field"><label>Level / grade</label><input id="compLevel" maxlength="20" placeholder="Junior A"></div>
     </div>
 
-    <h2>Your starting 15</h2>
-    <div class="roster" id="rosterA"></div>
-    <div class="hint">Opposition is tracked lighter — just jersey numbers (1–15), no names needed.</div>
+    <div class="field"><label>Half length (min)</label><input id="halfLen" type="number" inputmode="numeric" min="1" max="45" value="30"></div>
+
+    <h2>Starting 15 <span class="muted-count" id="starterCount"></span></h2>
+    <div class="hint" style="margin-top:0">Tap players from the panel to pick your starting 15.</div>
+    <div id="startersSel" class="starters"></div>
 
     <button class="primary" id="startBtn">Start match ▶</button>
-    <button class="ghost" id="resetTeamsBtn">Reset to sample squad</button>
   </section>
 
   <!-- ===================== LIVE ===================== -->
@@ -93,6 +90,8 @@
 
     <div class="possbar"><div class="a" id="possA" style="width:50%"></div><div class="b" id="possB" style="width:50%"></div></div>
     <div class="poss-lbl"><span id="possLblA">Poss 50%</span><span id="possLblB">50%</span></div>
+
+    <div class="sinbins" id="sinBins" style="display:none"></div>
 
     <div class="ctx" id="ctx"></div>
     <div id="actionArea"></div>
@@ -122,7 +121,7 @@
     <div class="chart-legend">
       <span><i class="lg-dot" style="background:#1b7a3d;box-shadow:0 0 0 1.5px #fff"></i>Point</span>
       <span><i class="lg-dot" style="background:#f2b705"></i>2-point</span>
-      <span><i class="lg-dot lg-goal" style="background:#1b7a3d;box-shadow:0 0 0 2px #fff"></i>Goal</span>
+      <span><i class="lg-dot lg-goal" style="background:#2563eb;box-shadow:0 0 0 2px #fff"></i>Goal</span>
       <span><i class="lg-dot" style="border:2px solid #b23a2e;background:#fff"></i>Wide</span>
     </div>
 
@@ -142,6 +141,16 @@
       <span style="width:64px"></span>
     </div>
     <div id="detailBody"></div>
+  </section>
+
+  <!-- ===================== SQUADS ===================== -->
+  <section class="screen squads" id="screen-squads">
+    <div class="hist-head">
+      <button class="linkbtn" id="squadsBackBtn">‹ Home</button>
+      <b id="squadsTitle">Teams &amp; squads</b>
+      <span style="width:54px"></span>
+    </div>
+    <div id="squadsBody"></div>
   </section>
 
   <!-- ===================== HISTORY ===================== -->
@@ -174,6 +183,7 @@
 <script src="history.js" defer></script>
 <script src="detail.js" defer></script>
 <script src="live.js" defer></script>
+<script src="squads.js" defer></script>
 <script src="app.js" defer></script>
 </body>
 </html>
