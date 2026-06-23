@@ -579,6 +579,72 @@ function lateGame(side) {
   };
 }
 
+/* Auto-generated coaching talking points from your team's (side A) perspective.
+   Pure: reads state + derived stats, returns an ordered array of
+   { tone: 'good'|'bad'|'warn'|'info', text }. Works mid-match (half-time) or
+   full-time — it always reflects whatever is in state.events so far.
+   Lower `pr` = higher priority; the list is sorted and capped. */
+function matchBrief() {
+  const out = [];
+  const A = statsFor('A'), B = statsFor('B');
+  const nameB = state.meta.bName;
+  const diff = total(state.score.A) - total(state.score.B);
+
+  // Scoreboard headline (always shown first)
+  if (diff > 0)      out.push({ tone: 'good', pr: 0, text: `Leading by ${diff} — ${gp(state.score.A)} to ${gp(state.score.B)}.` });
+  else if (diff < 0) out.push({ tone: 'bad',  pr: 0, text: `Trailing by ${-diff} — ${gp(state.score.A)} to ${gp(state.score.B)}.` });
+  else               out.push({ tone: 'warn', pr: 0, text: `Level at ${gp(state.score.A)} apiece — next score matters.` });
+
+  // Possession
+  if (A.poss >= 55)      out.push({ tone: 'good', pr: 4, text: `Controlling possession (${A.poss}%) — keep recycling and make them chase.` });
+  else if (A.poss <= 45) out.push({ tone: 'warn', pr: 3, text: `Possession against you (${A.poss}%) — more support runs to keep the ball.` });
+
+  // Shooting / wides
+  if (A.shots >= 4) {
+    if (A.conv >= 65)                          out.push({ tone: 'good', pr: 5, text: `Sharp in front of goal — ${A.scores}/${A.shots} (${A.conv}%).` });
+    else if (A.wides >= 3 && A.wides >= A.scores) out.push({ tone: 'bad',  pr: 1, text: `${A.wides} wides from ${A.shots} shots (${A.conv}%) — tighten shot selection.` });
+    else if (A.conv <= 45)                     out.push({ tone: 'warn', pr: 2, text: `Conversion only ${A.conv}% (${A.scores}/${A.shots}) — work the better chance.` });
+  }
+
+  // Kickouts
+  const ko = (typeof kickoutAnalytics === 'function') ? kickoutAnalytics('A') : { retention: 0, pressWin: 0 };
+  if (A.koOwn >= 3 && ko.retention <= 55)      out.push({ tone: 'bad',  pr: 1, text: `Leaking your own kickout — only ${ko.retention}% retained. Vary the target.` });
+  else if (A.koOwn >= 3 && ko.retention >= 80) out.push({ tone: 'good', pr: 5, text: `Owning your kickout (${ko.retention}% retained).` });
+  if (ko.pressWin >= 50)                       out.push({ tone: 'good', pr: 4, text: `Press is biting — winning ${ko.pressWin}% of ${nameB}'s kickouts.` });
+
+  // Turnovers
+  const tv = (typeof transitionStats === 'function') ? transitionStats('A') : { toScores: 0, toPts: 0 };
+  if (A.toWon >= 3) out.push({
+    tone: tv.toScores ? 'good' : 'warn', pr: 3,
+    text: `Won ${A.toWon} turnovers` + (tv.toScores ? `, scored ${tv.toScores} (${tv.toPts} pts) off them.` : ` — punish them on the scoreboard.`)
+  });
+  if (A.toLost >= 5) out.push({ tone: 'warn', pr: 2, text: `Coughed up ${A.toLost} turnovers — protect the ball in the tackle.` });
+
+  // Discipline
+  const fc = (typeof foulCost === 'function') ? foulCost('A') : { pts: 0 };
+  if (fc.pts >= 2)        out.push({ tone: 'bad', pr: 1, text: `${fc.pts} pts conceded from frees — discipline in the tackle.` });
+  if (A.bl + A.rd >= 1)   out.push({ tone: 'bad', pr: 0, text: `Down a player (${A.bl} black, ${A.rd} red) — mind the spare man.` });
+
+  // Two-pointers / the arc
+  if (B.two >= 1 && B.two > A.two) out.push({ tone: 'warn', pr: 2, text: `${nameB} have ${B.two} two-pointer${B.two > 1 ? 's' : ''} — push up on the 40m arc.` });
+  else if (A.two >= 1)             out.push({ tone: 'good', pr: 5, text: `${A.two} two-pointer${A.two > 1 ? 's' : ''} landed — take the arc shot when it's on.` });
+
+  // Opponent momentum
+  const runs = (typeof scoringRuns === 'function') ? scoringRuns() : { longestB: { count: 0 } };
+  if (runs.longestB.count >= 3) out.push({ tone: 'warn', pr: 2, text: `${nameB} hit ${runs.longestB.count} scores in a row — steady the next few minutes.` });
+
+  // Scorer reliance
+  const ts = (typeof topScorer === 'function') ? topScorer('A') : null;
+  const totPts = total(state.score.A);
+  if (ts && totPts >= 6 && ts.pts >= totPts * 0.6) {
+    const nm = playerName('A', ts.n) ? `#${ts.n} ${playerName('A', ts.n)}` : `#${ts.n}`;
+    out.push({ tone: 'info', pr: 6, text: `${nm} has ${ts.pts} of your ${totPts} pts — get more shooters involved.` });
+  }
+
+  out.sort((a, b) => a.pr - b.pr);
+  return out.slice(0, 6);
+}
+
 /* Possession split per time block, derived from chain durations.
    Each chain is assigned to the block containing its start time.
    Returns [{ block, aPct, bPct }] sorted by block number. */

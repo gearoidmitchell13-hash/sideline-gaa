@@ -118,12 +118,14 @@ function showDetail() {
     _drow('Win %', koA.opp.pct + '%', koB.opp.pct + '%'));
 
   const rows = _playerRows('A');
-  let ptbl = `<div class="ptbl"><div class="pt-row pt-head"><span>Player</span><span>Pts</span><span>Sh</span><span>Cv%</span><span>TO</span></div>`;
+  const mins = (typeof playerStats === 'function') ? playerStats('A') : {};
+  let ptbl = `<div class="ptbl"><div class="pt-row pt-head"><span>Player</span><span>Pts</span><span>Sh</span><span>Cv%</span><span>TO</span><span>Min</span></div>`;
   if (rows.length) {
     rows.forEach(r => {
       const nm = playerName('A', r.n) ? `#${r.n} ${escapeHtml(playerName('A', r.n))}` : `#${r.n}`;
       const cv = r.shots ? Math.round(r.scores / r.shots * 100) + '%' : '—';
-      ptbl += `<div class="pt-row"><span>${nm}</span><span>${r.pts}</span><span>${r.shots}</span><span>${cv}</span><span>${r.to}</span></div>`;
+      const mn = mins[r.n] && mins[r.n].minutes ? Math.round(mins[r.n].minutes) + "'" : '—';
+      ptbl += `<div class="pt-row"><span>${nm}</span><span>${r.pts}</span><span>${r.shots}</span><span>${cv}</span><span>${r.to}</span><span>${mn}</span></div>`;
     });
   } else { ptbl += `<div class="pt-empty">No player events yet</div>`; }
   ptbl += `</div>`;

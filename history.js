@@ -94,8 +94,10 @@ function showHistory() {
         <div class="hi-teams">${escapeHtml(m.meta.aName)} <b>${gp(m.score.A)}</b> – <b>${gp(m.score.B)}</b> ${escapeHtml(m.meta.bName)}</div>
         <div class="hi-sub">${m.meta.competition ? escapeHtml(m.meta.competition) + ' · ' : ''}${fmtDate(m.savedAt)} · ${total(m.score.A)}–${total(m.score.B)} <span class="res ${res}">${res}</span></div>
       </div>
+      <button class="hi-share" aria-label="share">📲</button>
       <button class="hi-del" aria-label="delete">✕</button>`;
     row.querySelector('.hi-main').onclick = () => viewArchivedMatch(m.id);
+    row.querySelector('.hi-share').onclick = (e) => { e.stopPropagation(); shareMatchRecord(m); };
     row.querySelector('.hi-del').onclick = (e) => { e.stopPropagation(); deleteArchived(m.id); };
     wrap.appendChild(row);
   });

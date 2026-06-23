@@ -139,3 +139,257 @@ function exportCSV() {
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
+
+/* ---------- half-time / full-time brief ----------
+   Renders matchBrief() into the bottom sheet. If onContinue is given, a primary
+   action button advances the game (used at half-time); otherwise it's read-only. */
+function showBrief(continueLabel, onContinue) {
+  const items = (typeof matchBrief === 'function') ? matchBrief() : [];
+  const body = document.getElementById('sheetBody');
+  body.innerHTML = '';
+
+  const h = document.createElement('div');
+  h.className = 'sh-title';
+  h.textContent = state.phase === 'ended' ? '🧠 Full-time brief' : '🧠 Half-time brief';
+  body.appendChild(h);
+
+  const sub = document.createElement('div');
+  sub.className = 'sh-note';
+  sub.style.margin = '-4px 0 10px';
+  sub.textContent = `${state.meta.aName} ${gp(state.score.A)} – ${gp(state.score.B)} ${state.meta.bName}`;
+  body.appendChild(sub);
+
+  const list = document.createElement('div');
+  list.className = 'brief-list';
+  if (!items.length) {
+    list.innerHTML = '<div class="brief-empty">Not enough has happened yet for talking points.</div>';
+  } else {
+    items.forEach(it => {
+      const r = document.createElement('div');
+      r.className = 'brief-row ' + it.tone;
+      r.innerHTML = `<span class="brief-dot"></span><span class="brief-tx">${escapeHtml(it.text)}</span>`;
+      list.appendChild(r);
+    });
+  }
+  body.appendChild(list);
+
+  if (onContinue) {
+    const cont = document.createElement('button');
+    cont.className = 'sh-opt g span';
+    cont.style.marginTop = '12px';
+    cont.innerHTML = continueLabel;
+    cont.onclick = onContinue;
+    body.appendChild(cont);
+  }
+
+  const c = document.createElement('div');
+  c.className = 'sh-cancel';
+  c.textContent = onContinue ? 'Not yet' : 'Close';
+  c.onclick = closeSheet;
+  body.appendChild(c);
+
+  sheetOpen = true;
+  document.getElementById('overlay').classList.add('show');
+}
+
+/* ---------- share as image ----------
+   Renders a square stats card on a canvas and shares it via the Web Share API
+   (files), falling back to a PNG download. No DOM screenshot, no dependencies. */
+function _roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+/* Shrink font until `text` fits within maxW; returns the chosen px size. */
+function _fitFont(ctx, text, weight, maxPx, maxW) {
+  let px = maxPx;
+  do {
+    ctx.font = `${weight} ${px}px -apple-system,"Segoe UI",Roboto,Arial,sans-serif`;
+    if (ctx.measureText(text).width <= maxW) break;
+    px -= 2;
+  } while (px > 16);
+  return px;
+}
+
+function buildSummaryCanvas() {
+  const W = 1080, H = 1080;
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d');
+  const GREEN = '#1b7a3d', GREEN_D = '#125c2d', GOLD = '#f2b705',
+        INK = '#16241c', RED = '#b23a2e', MUTED = '#6b7a70', LINE = '#e2e7e0';
+
+  // background
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, W, H);
+
+  // header band (green gradient)
+  const HEAD = 430;
+  const grad = ctx.createLinearGradient(0, 0, 0, HEAD);
+  grad.addColorStop(0, GREEN); grad.addColorStop(1, GREEN_D);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, HEAD);
+
+  const cx = W / 2;
+  ctx.textBaseline = 'alphabetic';
+
+  // brand + meta line
+  ctx.textAlign = 'left';
+  ctx.fillStyle = GOLD;
+  ctx.font = '800 30px -apple-system,"Segoe UI",Roboto,Arial,sans-serif';
+  ctx.fillText('SidelineGAA', 56, 64);
+
+  const meta = [state.meta.competition, state.meta.level].filter(Boolean).join(' · ');
+  const dateStr = new Date(state.savedAt || Date.now()).toLocaleDateString();
+  ctx.textAlign = 'right';
+  ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  ctx.font = '600 26px -apple-system,"Segoe UI",Roboto,Arial,sans-serif';
+  ctx.fillText(meta ? `${meta} · ${dateStr}` : dateStr, W - 56, 64);
+
+  // team names
+  const nameMaxW = W / 2 - 110;
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#fff';
+  const nA = state.meta.aName, nB = state.meta.bName;
+  const fA = _fitFont(ctx, nA, '800', 46, nameMaxW);
+  ctx.font = `800 ${fA}px -apple-system,"Segoe UI",Roboto,Arial,sans-serif`;
+  ctx.fillText(nA, W * 0.27, 175);
+  const fB = _fitFont(ctx, nB, '800', 46, nameMaxW);
+  ctx.font = `800 ${fB}px -apple-system,"Segoe UI",Roboto,Arial,sans-serif`;
+  ctx.fillText(nB, W * 0.73, 175);
+
+  // scorelines (goals-points)
+  ctx.fillStyle = '#fff';
+  ctx.font = '900 96px -apple-system,"Segoe UI",Roboto,Arial,sans-serif';
+  ctx.fillText(gp(state.score.A), W * 0.27, 285);
+  ctx.fillText(gp(state.score.B), W * 0.73, 285);
+
+  // total points under each score
+  ctx.fillStyle = 'rgba(255,255,255,0.8)';
+  ctx.font = '700 32px -apple-system,"Segoe UI",Roboto,Arial,sans-serif';
+  ctx.fillText(`${total(state.score.A)} pts`, W * 0.27, 330);
+  ctx.fillText(`${total(state.score.B)} pts`, W * 0.73, 330);
+
+  // separating dash
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.font = '900 70px -apple-system,Arial,sans-serif';
+  ctx.fillText('–', cx, 270);
+
+  // result chip
+  const tA = total(state.score.A), tB = total(state.score.B);
+  const result = tA === tB ? 'Draw'
+    : `${tA > tB ? nA : nB} win by ${Math.abs(tA - tB)}`;
+  const phase = state.phase === 'ended' ? 'FULL TIME' : 'LIVE';
+  ctx.font = '800 28px -apple-system,"Segoe UI",Roboto,Arial,sans-serif';
+  const chipText = `${phase} · ${result}`;
+  const chipW = ctx.measureText(chipText).width + 56;
+  ctx.fillStyle = GOLD;
+  _roundRect(ctx, cx - chipW / 2, 368, chipW, 46, 23);
+  ctx.fill();
+  ctx.fillStyle = INK;
+  ctx.textBaseline = 'middle';
+  ctx.fillText(chipText, cx, 392);
+  ctx.textBaseline = 'alphabetic';
+
+  // ---- comparison rows ----
+  const A = statsFor('A'), B = statsFor('B');
+  const tsA = topScorer('A'), tsB = topScorer('B');
+  const rows = [
+    ['Possession', A.poss + '%', B.poss + '%'],
+    ['Shots', A.shots, B.shots],
+    ['Conversion', A.conv + '%', B.conv + '%'],
+    ['Two-pointers', A.twos, B.twos],
+    ['Turnovers won', A.toWon, B.toWon],
+    ['Frees won', A.fw, B.fw],
+    ['Top scorer', tsA ? `#${tsA.n} (${tsA.pts})` : '—', tsB ? `#${tsB.n} (${tsB.pts})` : '—'],
+  ];
+
+  const top = HEAD + 60, rowH = 78;
+  rows.forEach((r, i) => {
+    const y = top + i * rowH;
+    // divider
+    ctx.strokeStyle = LINE; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(56, y + rowH - 18); ctx.lineTo(W - 56, y + rowH - 18); ctx.stroke();
+    // label
+    ctx.textAlign = 'center';
+    ctx.fillStyle = MUTED;
+    ctx.font = '700 27px -apple-system,"Segoe UI",Roboto,Arial,sans-serif';
+    ctx.fillText(String(r[0]), cx, y + 34);
+    // values
+    ctx.font = '800 38px -apple-system,"Segoe UI",Roboto,Arial,sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillStyle = GREEN;
+    ctx.fillText(String(r[1]), 56, y + 40);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = RED;
+    ctx.fillText(String(r[2]), W - 56, y + 40);
+  });
+
+  // footer
+  ctx.textAlign = 'center';
+  ctx.fillStyle = MUTED;
+  ctx.font = '600 24px -apple-system,"Segoe UI",Roboto,Arial,sans-serif';
+  ctx.fillText('Tracked live with SidelineGAA · 2026 GAA rules', cx, H - 36);
+
+  return cv;
+}
+
+/* Turn a finished canvas into a share/download. Filename + title captured by caller. */
+function _shareCanvas(cv, fileName, title) {
+  cv.toBlob(async (blob) => {
+    if (!blob) { alert('Could not build the image.'); return; }
+    const file = new File([blob], fileName, { type: 'image/png' });
+
+    // Web Share API (iOS Safari) — share the file directly to WhatsApp etc.
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file], title, text: title }); return; }
+      catch (e) { if (e && e.name === 'AbortError') return; }   // user cancelled
+    }
+
+    // Fallback — download the PNG
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = fileName;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }, 'image/png');
+}
+
+function _shareFileName(m) {
+  return `SidelineGAA_${m.meta.aName}_v_${m.meta.bName}.png`.replace(/\s+/g, '_');
+}
+function _shareTitle(m) {
+  return `${m.meta.aName} ${gp(m.score.A)} – ${gp(m.score.B)} ${m.meta.bName}`;
+}
+
+/* Share the currently-loaded match (summary screen button). */
+function shareSummaryImage() {
+  let cv;
+  try { cv = buildSummaryCanvas(); }
+  catch (e) { alert('Could not build the image.'); return; }
+  _shareCanvas(cv, _shareFileName(state), _shareTitle(state));
+}
+
+/* Share an archived match directly from the history list, without navigating.
+   The canvas is drawn synchronously while state is swapped, then state restored
+   before the async share — so the swap never overlaps user interaction. */
+function shareMatchRecord(rec) {
+  const saved = state;
+  let cv, fileName, title;
+  try {
+    state = rec;
+    cv = buildSummaryCanvas();
+    fileName = _shareFileName(rec);
+    title = _shareTitle(rec);
+  } catch (e) {
+    state = saved;
+    alert('Could not build the image.');
+    return;
+  }
+  state = saved;
+  _shareCanvas(cv, fileName, title);
+}

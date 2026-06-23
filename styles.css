@@ -169,8 +169,21 @@ input{ -webkit-user-select:text; user-select:text; }
 .res.W{background:rgba(27,122,61,.15);color:var(--teamA)}
 .res.L{background:rgba(178,58,46,.15);color:var(--teamB)}
 .res.D{background:#eceee9;color:var(--muted)}
+.hi-share{background:none;border:none;font-size:16px;padding:6px 6px;line-height:1}
+.hi-share:active{filter:brightness(.9)}
 .hi-del{background:none;border:none;color:var(--muted);font-size:16px;padding:6px 8px}
 .empty{text-align:center;color:var(--muted);font-size:13px;padding:24px 10px;line-height:1.6}
+
+/* half-time / full-time brief */
+.brief-list{display:flex;flex-direction:column;gap:8px;text-align:left}
+.brief-row{display:flex;align-items:flex-start;gap:10px;background:#fff;border:1px solid var(--line);
+  border-left-width:4px;border-radius:10px;padding:10px 12px;font-size:13.5px;line-height:1.4;font-weight:600}
+.brief-row .brief-dot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex:0 0 auto}
+.brief-row.good{border-left-color:var(--green)} .brief-row.good .brief-dot{background:var(--green)}
+.brief-row.bad{border-left-color:var(--teamB)} .brief-row.bad .brief-dot{background:var(--teamB)}
+.brief-row.warn{border-left-color:var(--gold)} .brief-row.warn .brief-dot{background:var(--gold)}
+.brief-row.info{border-left-color:#6b7a70} .brief-row.info .brief-dot{background:#6b7a70}
+.brief-empty{text-align:center;color:var(--muted);font-size:13px;padding:18px 8px}
 
 /* print report */
 .print-only{display:none}
@@ -181,7 +194,7 @@ input{ -webkit-user-select:text; user-select:text; }
   body{background:#fff !important}
   .app{max-width:100% !important;padding:0 16px !important}
   .appbar,.chart-toggle,.footbar,.overlay,#screen-setup,#screen-live,#screen-history,
-  #backLiveBtn,#printBtn,#exportBtn,#newMatchBtn{display:none !important}
+  #backLiveBtn,#printBtn,#exportBtn,#newMatchBtn,#shareImgBtn,#briefBtn{display:none !important}
   #screen-summary{display:flex !important}
   .print-only{display:block !important}
   #sumChart{max-width:360px}
@@ -201,7 +214,7 @@ button{touch-action:manipulation}
 .d-cols span:nth-child(2){flex:1}
 .d-card .stat-row{padding:7px 0}
 .ptbl{font-size:12px}
-.pt-row{display:grid;grid-template-columns:2.2fr .8fr .8fr 1fr .8fr;gap:4px;padding:7px 0;border-bottom:1px solid var(--line);align-items:center}
+.pt-row{display:grid;grid-template-columns:2.2fr .8fr .8fr 1fr .8fr .9fr;gap:4px;padding:7px 0;border-bottom:1px solid var(--line);align-items:center}
 .pt-row:last-child{border-bottom:none}
 .pt-row span:not(:first-child){text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
 .pt-head{font-size:10px;color:var(--muted);font-weight:800;text-transform:uppercase}

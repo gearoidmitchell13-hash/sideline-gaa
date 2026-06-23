@@ -465,6 +465,7 @@ function moreMenu() {
   openSheet('Match controls', [
     { label: `Substitution (${state.meta.aName})`, onClick: () => pickPlayer('A', 'Player coming OFF', off => pickBench(off)) },
     { label: ({ H1: 'Go to half-time', H2: 'End of normal time…', ET1: 'Go to ET half-time', ET2: 'End match (full time)' }[state.period] || 'End period'), onClick: () => { if (state.period === 'ET2' && typeof confirm === 'function' && !confirm('End the match? It will be saved to history.')) return; endPeriod(); } },
+    { label: '🧠 Talking points', onClick: () => showBrief() },
     { label: state.running ? 'Pause clock' : 'Resume clock', onClick: () => { state.running = !state.running; closeSheet(); render(); saveMatch(); } },
     { label: '🏠 Home (match stays saved)', onClick: () => { closeSheet(); goHome(); } },
     { label: 'New match (discard)', cls: 'b', onClick: () => { if (typeof confirm === 'function' && !confirm('Discard the current match? It is not saved to history.')) return; closeSheet(); clearMatch(); state = null; undoStack = []; renderSetup(); showScreen('setup'); } }
@@ -484,7 +485,7 @@ function endMatch() {
   closeSheet(); saveMatch(); showSummary();
 }
 function endPeriod() {
-  if (state.period === 'H1') { startNextPeriod('H2', 'Half-time'); }
+  if (state.period === 'H1') { showBrief('Start 2nd half ▶', () => startNextPeriod('H2', 'Half-time')); }
   else if (state.period === 'H2') {
     closeSheet();
     openSheet('End of normal time', [
@@ -492,7 +493,7 @@ function endPeriod() {
       { label: 'Go to extra time', cls: 'go span', onClick: () => startNextPeriod('ET1', 'Full time (normal)') }
     ], 1, 'Extra time is two periods — tap throw-in to restart each.');
   }
-  else if (state.period === 'ET1') { startNextPeriod('ET2', 'Extra-time half-time'); }
+  else if (state.period === 'ET1') { showBrief('Start ET 2nd half ▶', () => startNextPeriod('ET2', 'Extra-time half-time')); }
   else { endMatch(); }
 }
 
@@ -645,6 +646,8 @@ function init() {
   $('newMatchBtn').onclick = () => { if (state && state.phase !== 'ended' && typeof confirm === 'function' && !confirm('Discard this match? It is not saved to history.')) return; clearMatch(); state = null; undoStack = []; renderSetup(); showScreen('setup'); };
   $('histBackBtn').onclick = () => goHome();
   $('printBtn').onclick = () => window.print();
+  $('shareImgBtn').onclick = () => shareSummaryImage();
+  $('briefBtn').onclick = () => showBrief();
   $('detailBtn').onclick = () => showDetail();
   $('detailBackBtn').onclick = () => showScreen('summary');
   $('analysisBtn').onclick = () => showAnalysis();
